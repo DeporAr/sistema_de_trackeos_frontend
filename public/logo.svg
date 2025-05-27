@@ -1,0 +1,8 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M20 15H50C55.523 15 60 19.477 60 25V35C60 40.523 55.523 45 50 45H20C14.477 45 10 40.523 10 35V25C10 19.477 14.477 15 20 15Z" fill="black"/>
+  <path d="M70 15H140C145.523 15 150 19.477 150 25V35C150 40.523 145.523 45 140 45H70C64.477 45 60 40.523 60 35V25C60 19.477 64.477 15 70 15Z" fill="black"/>
+  <path d="M160 15H180C185.523 15 190 19.477 190 25V35C190 40.523 185.523 45 180 45H160C154.477 45 150 40.523 150 35V25C150 19.477 154.477 15 160 15Z" fill="#F27122"/>
+  <text x="35" y="35" font-family="Akira, sans-serif" font-size="18" fill="white">D</text>
+  <text x="100" y="35" font-family="Akira, sans-serif" font-size="18" fill="white">EPOR</text>
+  <text x="170" y="35" font-family="Akira, sans-serif" font-size="18" fill="white">AR</text>
+</svg>

@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Akira";
+  src: url("/fonts/Akira.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --primary: #f27122;
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+.font-akira {
+  font-family: "Akira", sans-serif;
+}
