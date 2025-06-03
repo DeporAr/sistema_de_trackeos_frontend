@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth-context";
-import { Header } from "@/app/components/header";
 import { PdfAnalyzer } from "@/components/pdf-analyzer";
 
 export default function PdfAnalyzerPage() {
@@ -35,8 +34,6 @@ export default function PdfAnalyzerPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-
       <main className="flex-1 container mx-auto px-4 py-6">
         <h1 className="text-2xl font-akira text-center mb-6">
           ANALIZADOR DE PDF

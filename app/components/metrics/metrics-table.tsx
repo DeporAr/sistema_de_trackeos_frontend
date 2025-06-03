@@ -163,7 +163,13 @@ export function MetricsTable({ orders }: MetricsTableProps) {
   const filteredOrders = orders.filter(
     (order) =>
       String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.orderCode.toLowerCase().includes(searchTerm.toLowerCase()),
+      order.orderCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.assignedToName || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (order.shippingCode || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
   );
 
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
@@ -187,7 +193,7 @@ export function MetricsTable({ orders }: MetricsTableProps) {
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por ID o código..."
+            placeholder="Buscar por ID, código, responsable o envío..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8"

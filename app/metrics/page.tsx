@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth-context";
-import { Header } from "@/app/components/header";
 import { MetricsFilters } from "@/app/components/metrics/metrics-filters";
 import { MetricsCharts } from "@/app/components/metrics/metrics-charts";
 import { MetricsTable } from "@/app/components/metrics/metrics-table";
@@ -209,8 +208,6 @@ export default function MetricsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-
       <main className="flex-1 container mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-akira">MÉTRICAS DE PEDIDOS</h1>

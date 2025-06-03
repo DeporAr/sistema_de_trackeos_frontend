@@ -11,6 +11,7 @@ import {
   QrCode,
   BarChart3,
   Users,
+  Plus,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -61,48 +62,59 @@ export function Header() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => handleNavigation("/metrics")}
-                  className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
-                    pathname === "/metrics" ? "text-primary" : ""
-                  }`}
-                >
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Métricas
-                </button>
-                <button
-                  onClick={() => handleNavigation("/users")}
-                  className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
-                    pathname === "/users" ? "text-primary" : ""
-                  }`}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  Usuarios
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => handleNavigation("/scan")}
-              className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
-                pathname === "/scan" ? "text-primary" : ""
-              }`}
-            >
-              <QrCode className="mr-2 h-4 w-4" />
-              Escanear QR
-            </button>
-            <button
-              onClick={() => handleNavigation("/analyze")}
-              className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
-                pathname === "/analyze" ? "text-primary" : ""
-              }`}
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              Analizar PDF
-            </button>
-          </nav>
+          {user && (
+            <nav className="hidden md:flex space-x-8">
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => handleNavigation("/metrics")}
+                    className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
+                      pathname === "/metrics" ? "text-primary" : ""
+                    }`}
+                  >
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    Métricas
+                  </button>
+                  <button
+                    onClick={() => handleNavigation("/users")}
+                    className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
+                      pathname === "/users" ? "text-primary" : ""
+                    }`}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Usuarios
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => handleNavigation("/scan")}
+                className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
+                  pathname === "/scan" ? "text-primary" : ""
+                }`}
+              >
+                <QrCode className="mr-2 h-4 w-4" />
+                Estados
+              </button>
+              <button
+                onClick={() => handleNavigation("/analyze")}
+                className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
+                  pathname === "/analyze" ? "text-primary" : ""
+                }`}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Analizar PDF
+              </button>
+              <button
+                onClick={() => handleNavigation("/manual-order")}
+                className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
+                  pathname === "/manual-order" ? "text-primary" : ""
+                }`}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Cargar Pedido
+              </button>
+            </nav>
+          )}
 
           {/* User Menu (Desktop) */}
           {user && (
@@ -159,34 +171,32 @@ export function Header() {
       </div>
 
       {/* Mobile menu */}
-      {menuOpen && (
+      {menuOpen && user && (
         <div className="md:hidden bg-white border-t">
           <div className="container mx-auto px-4 py-2">
-            {user && (
-              <div className="py-3 border-b">
-                <div className="flex items-center space-x-3 px-2">
-                  <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center">
-                    {userAvatar ? (
-                      <img
-                        src={userAvatar}
-                        alt={userName}
-                        className="w-10 h-10 rounded-full"
-                      />
-                    ) : (
-                      <span className="text-sm font-medium">
-                        {getInitials(userName)}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">{userName}</p>
-                    <p className="text-sm text-gray-500 capitalize">
-                      {user.role?.name || ""}
-                    </p>
-                  </div>
+            <div className="py-3 border-b">
+              <div className="flex items-center space-x-3 px-2">
+                <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center">
+                  {userAvatar ? (
+                    <img
+                      src={userAvatar}
+                      alt={userName}
+                      className="w-10 h-10 rounded-full"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium">
+                      {getInitials(userName)}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800">{userName}</p>
+                  <p className="text-sm text-gray-500 capitalize">
+                    {user.role?.name || ""}
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
 
             <nav className="py-2 space-y-1">
               {isAdmin && (
@@ -229,19 +239,26 @@ export function Header() {
                 <FileText className="mr-2 h-4 w-4" />
                 Analizar PDF
               </button>
+              <button
+                onClick={() => handleNavigation("/manual-order")}
+                className={`flex items-center w-full px-2 py-2 text-gray-700 hover:bg-gray-100 rounded-md ${
+                  pathname === "/manual-order" ? "bg-gray-100" : ""
+                }`}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Cargar Pedido
+              </button>
 
-              {user && (
-                <button
-                  onClick={() => {
-                    logout();
-                    setMenuOpen(false);
-                  }}
-                  className="flex items-center w-full px-2 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar sesión
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  logout();
+                  setMenuOpen(false);
+                }}
+                className="flex items-center w-full px-2 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Cerrar sesión
+              </button>
             </nav>
           </div>
         </div>

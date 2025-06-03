@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth-context";
 import { UserRole } from "@/app/types/user";
-import { Header } from "@/app/components/header";
 import QrScanner from "@/app/components/qr/qr-scanner";
-import { ManualOrderEntry } from "@/app/components/orders/manual-order-entry";
 import QrDataDisplay from "@/app/components/qr/qr-data-display";
 import OrderStatusUpdate from "@/app/components/orders/order-status-update";
 import {
@@ -144,11 +142,39 @@ export default function ScanPage() {
     }
 
     try {
-      console.log("ID ingresado manualmente:", orderId);
       setScannedQrData(orderId);
-      await fetchOrderData(orderId);
+      setIsProcessing(true);
+      setError(null);
+
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(
+        `https://incredible-charm-production.up.railway.app/orders/manual/${orderId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al obtener el pedido manual");
+      }
+
+      const data = await response.json();
+      setOrder({
+        ...data,
+        orderCode: data.orderCode.toString(),
+      });
+      setHasProcessedQr(true);
     } catch (error) {
-      console.error("Error al procesar la entrada manual:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Error al obtener el pedido manual",
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -183,8 +209,6 @@ export default function ScanPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-
       <main className="flex-1 container mx-auto px-4 py-6">
         <h1 className="text-2xl font-akira text-center mb-6">
           ESCANEAR CÓDIGO QR
@@ -219,10 +243,42 @@ export default function ScanPage() {
               {activeTab === "scan" ? (
                 <QrScanner onScan={handleScan} onClose={() => {}} />
               ) : (
-                <ManualOrderEntry
-                  onSubmit={handleManualEntry}
-                  isProcessing={isProcessing}
-                />
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const input = form.elements.namedItem(
+                      "manualOrderId",
+                    ) as HTMLInputElement;
+                    if (input.value.trim()) {
+                      await handleManualEntry(input.value.trim());
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="manualOrderId"
+                  >
+                    Ingresar ID del Pedido
+                  </label>
+                  <input
+                    id="manualOrderId"
+                    name="manualOrderId"
+                    type="text"
+                    className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-primary"
+                    placeholder="Ej: ML-12345"
+                    disabled={isProcessing}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90 disabled:opacity-50"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Procesando..." : "Buscar Pedido"}
+                  </button>
+                </form>
               )}
             </div>
           ) : (
@@ -253,38 +309,44 @@ export default function ScanPage() {
                       </div>
                     </CardHeader>
                     <CardContent className="pt-6">
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                ID
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Descripción
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Cantidad
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {order.products.map((item) => (
-                              <tr key={item.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {item.id}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {item.description}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {item.quantity}
-                                </td>
+                      {order.products && order.products.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  ID
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Descripción
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Cantidad
+                                </th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {order.products.map((item) => (
+                                <tr key={item.id} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {item.id}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {item.description}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {item.quantity}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-500 py-4">
+                          Este pedido no tiene productos asociados.
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )

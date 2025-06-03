@@ -43,23 +43,12 @@ export function MetricsFilters({
 }: MetricsFiltersProps) {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [responsibleParty, setResponsibleParty] = useState<string>("");
-  const [orderId, setOrderId] = useState<string>("");
   const [status, setStatus] = useState<string>("ALL");
-  const [selectedTimeRange, setSelectedTimeRange] = useState<string>(timeRange);
 
   const handleApplyFilters = () => {
     // Asegurarse de que las fechas estén en el formato correcto YYYY-MM-DD
     const formattedStartDate = startDate ? format(startDate, "yyyy-MM-dd") : "";
     const formattedEndDate = endDate ? format(endDate, "yyyy-MM-dd") : "";
-
-    // Asegurarse de que el responsable sea un número si no está vacío
-    const formattedResponsible = responsibleParty
-      ? responsibleParty.trim()
-      : "";
-
-    // Asegurarse de que el ID del pedido no tenga espacios
-    const formattedOrderId = orderId ? orderId.trim() : "";
 
     // Convertir "ALL" a string vacío para el estado
     const formattedStatus = status === "ALL" ? "" : status;
@@ -67,10 +56,10 @@ export function MetricsFilters({
     const newFilters = {
       fecha_inicio: formattedStartDate,
       fecha_fin: formattedEndDate,
-      responsable: formattedResponsible,
-      pedido_id: formattedOrderId,
+      responsable: "",
+      pedido_id: "",
       estado: formattedStatus,
-      time_range: selectedTimeRange,
+      time_range: timeRange,
     };
 
     console.log("Aplicando filtros:", newFilters);
@@ -81,10 +70,7 @@ export function MetricsFilters({
   const handleResetFilters = () => {
     setStartDate(undefined);
     setEndDate(undefined);
-    setResponsibleParty("");
-    setOrderId("");
     setStatus("ALL");
-    setSelectedTimeRange("day");
 
     const resetFilters = {
       fecha_inicio: "",
@@ -92,7 +78,7 @@ export function MetricsFilters({
       responsable: "",
       pedido_id: "",
       estado: "",
-      time_range: "day",
+      time_range: timeRange,
     };
 
     console.log("Reseteando filtros:", resetFilters);
@@ -159,28 +145,6 @@ export function MetricsFilters({
           </Popover>
         </div>
 
-        {/* Responsable */}
-        <div className="space-y-2">
-          <Label htmlFor="responsibleParty">Responsable</Label>
-          <Input
-            id="responsibleParty"
-            value={responsibleParty}
-            onChange={(e) => setResponsibleParty(e.target.value)}
-            placeholder="Nombre del responsable"
-          />
-        </div>
-
-        {/* ID de Orden */}
-        <div className="space-y-2">
-          <Label htmlFor="orderId">ID de Orden</Label>
-          <Input
-            id="orderId"
-            value={orderId}
-            onChange={(e) => setOrderId(e.target.value)}
-            placeholder="Ej: ORD-12345"
-          />
-        </div>
-
         {/* Estado */}
         <div className="space-y-2">
           <Label htmlFor="status">Estado</Label>
@@ -198,24 +162,6 @@ export function MetricsFilters({
               <SelectItem value="EN_DESPACHO">En Despacho</SelectItem>
               <SelectItem value="DESPACHADO">Despachado</SelectItem>
               <SelectItem value="ENTREGADO">Entregado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Rango de tiempo */}
-        <div className="space-y-2">
-          <Label htmlFor="timeRange">Rango de tiempo</Label>
-          <Select
-            value={selectedTimeRange}
-            onValueChange={setSelectedTimeRange}
-          >
-            <SelectTrigger id="timeRange">
-              <SelectValue placeholder="Seleccionar rango" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">Diario</SelectItem>
-              <SelectItem value="week">Semanal</SelectItem>
-              <SelectItem value="month">Mensual</SelectItem>
             </SelectContent>
           </Select>
         </div>
