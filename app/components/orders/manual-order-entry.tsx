@@ -67,7 +67,7 @@ export function ManualOrderForm({
   onSubmit: (shippingInfo: ShippingInfo) => void;
   isProcessing: boolean;
   onCancel?: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (orderCode: string) => void;
 }) {
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     address: "",
@@ -102,10 +102,9 @@ export function ManualOrderForm({
         }),
       });
       if (res.ok) {
-        setSuccessMsg("Pedido generado correctamente");
-        setTimeout(() => setSuccessMsg(""), 2000);
+        const data = await res.json();
+        if (typeof onSuccess === "function") onSuccess(data.orderCode);
         if (typeof onCancel === "function") onCancel();
-        if (typeof onSuccess === "function") onSuccess();
       }
       setShippingInfo({
         address: "",

@@ -19,11 +19,11 @@ export function StatusHistoryTable({ history }: StatusHistoryTableProps) {
   const calculateTimeInStatus = (startedAt: string, endedAt: string | null) => {
     const start = parseISO(startedAt);
     const end = endedAt ? parseISO(endedAt) : new Date();
-    const diffInHours = Math.floor(
-      (end.getTime() - start.getTime()) / (1000 * 60 * 60),
-    );
+    const diffMs = end.getTime() - start.getTime();
+    const safeDiffMs = Math.max(0, diffMs);
+    const diffInHours = Math.floor(safeDiffMs / (1000 * 60 * 60));
     const diffInMinutes = Math.floor(
-      ((end.getTime() - start.getTime()) % (1000 * 60 * 60)) / (1000 * 60),
+      (safeDiffMs % (1000 * 60 * 60)) / (1000 * 60),
     );
     return `${diffInHours}h ${diffInMinutes}m`;
   };

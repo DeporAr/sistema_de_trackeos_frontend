@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ManualOrderForm,
   ManualOrderList,
@@ -8,11 +8,22 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Plus, Search } from "lucide-react";
+import { useAuth } from "@/app/context/auth-context";
+import { useRouter } from "next/navigation";
 
 export default function ManualOrderPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshList, setRefreshList] = useState(0);
+  const [successMsg, setSuccessMsg] = useState("");
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
 
   const handleManualOrderSubmit = async (shippingInfo: any) => {
     try {
@@ -46,8 +57,10 @@ export default function ManualOrderPage() {
     }
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = (orderCode: string) => {
     setRefreshList((prev) => prev + 1);
+    setSuccessMsg(`Pedido generado correctamente. ID: ${orderCode}`);
+    setTimeout(() => setSuccessMsg(""), 3000);
   };
 
   return (
@@ -64,6 +77,12 @@ export default function ManualOrderPage() {
           </Button>
         )}
       </div>
+
+      {successMsg && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4 text-center">
+          {successMsg}
+        </div>
+      )}
 
       {showForm && (
         <div className="mb-8">
