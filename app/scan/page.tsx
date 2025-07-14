@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth-context";
 import { UserRole } from "@/app/types/user";
 import QrScanner from "@/app/components/qr/qr-scanner";
 import QrDataDisplay from "@/app/components/qr/qr-data-display";
 import OrderStatusUpdate from "@/app/components/orders/order-status-update";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { Camera } from "lucide-react";
 
 interface OrderItem {
   id: string;
@@ -29,6 +28,7 @@ interface Order {
   updatedAt: string;
   shippingCode: string;
   orderCode: string;
+  packageImageUrl?: string;
 }
 
 export default function ScanPage() {
@@ -40,6 +40,10 @@ export default function ScanPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasProcessedQr, setHasProcessedQr] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -183,6 +187,78 @@ export default function ScanPage() {
     setOrder(null);
     setError(null);
     setHasProcessedQr(false);
+    setSelectedImage(null);
+    setPreviewUrl(null);
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadImage = async () => {
+    if (!selectedImage || !order) return;
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No hay token de autenticación");
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedImage);
+      formData.append("orderId", order.id);
+
+      const response = await fetch(
+        "https://incredible-charm-production.up.railway.app/api/volume/upload",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          handleJwtError();
+          return;
+        }
+        const errorText = await response.text();
+        console.error("Server error on image upload:", errorText);
+        throw new Error(
+          "Ocurrió un error en el servidor al subir la imagen. Por favor, intente de nuevo más tarde.",
+        );
+      }
+
+      const imageUrl = await response.text();
+
+      setOrder(prevOrder =>
+        prevOrder ? { ...prevOrder, packageImageUrl: imageUrl } : null,
+      );
+
+      alert("Imagen subida con éxito.");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Ocurrió un error desconocido";
+      setError(errorMessage);
+      alert(`Error al subir la imagen: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
+      setSelectedImage(null);
+      setPreviewUrl(null);
+    }
   };
 
   if (isLoading) {
@@ -347,6 +423,42 @@ export default function ScanPage() {
                           Este pedido no tiene productos asociados.
                         </div>
                       )}
+
+                      {/* Sección para subir imagen */}
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <h4 className="text-md font-semibold mb-4">Imagen del Paquete</h4>
+                        {order.packageImageUrl ? (
+                          <div>
+                            <img src={order.packageImageUrl} alt="Imagen del paquete" className="rounded-md max-w-full h-auto" />
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-center w-full">
+                              <Label htmlFor="picture" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                {
+                                  previewUrl ? (
+                                    <img src={previewUrl} alt="Vista previa" className="h-full w-full object-contain" />
+                                  ) : (
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                      <Camera className="w-8 h-8 mb-2 text-gray-500" />
+                                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click para subir</span> o arrastra y suelta</p>
+                                      <p className="text-xs text-gray-500">PNG, JPG (MAX. 800x400px)</p>
+                                    </div>
+                                  )
+                                }
+                                <Input id="picture" type="file" className="hidden" onChange={handleImageChange} accept="image/png, image/jpeg" ref={fileInputRef} />
+                              </Label>
+                            </div>
+                            {selectedImage && (
+                              <div className="flex justify-center">
+                                <Button onClick={handleUploadImage} disabled={isUploading}>
+                                  {isUploading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subiendo...</> : "Subir Imagen"}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 )

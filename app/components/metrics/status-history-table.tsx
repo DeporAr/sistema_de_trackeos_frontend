@@ -37,19 +37,16 @@ export function StatusHistoryTable({ history }: StatusHistoryTableProps) {
   };
 
   return (
-    <div className="w-full py-4 bg-muted/50">
-      <h4 className="font-semibold mb-4 text-center">Historial de Estados</h4>
-      <Table className="w-full">
+    <div className="w-full p-4 bg-gray-50">
+      <h4 className="font-semibold mb-4 text-center text-gray-800">Historial de Estados</h4>
+      <Table className="w-full bg-white rounded-md shadow-sm">
         <TableHeader>
-          <TableRow className="bg-muted">
-            <TableHead className="w-[16.6%] text-center">Estado</TableHead>
-            <TableHead className="w-[16.6%] text-center">Inicio</TableHead>
-            <TableHead className="w-[16.6%] text-center">Fin</TableHead>
-            <TableHead className="w-[16.6%] text-center">Duración</TableHead>
-            <TableHead className="w-[16.6%] text-center">
-              Cambiado por
-            </TableHead>
-            <TableHead className="w-[16.6%] text-center"></TableHead>
+          <TableRow>
+            <TableHead className="text-center">Estado</TableHead>
+            <TableHead className="text-center">Inicio</TableHead>
+            <TableHead className="text-center">Fin</TableHead>
+            <TableHead className="text-center">Duración</TableHead>
+            <TableHead className="text-center">Cambiado por</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -76,7 +73,6 @@ export function StatusHistoryTable({ history }: StatusHistoryTableProps) {
               <TableCell className="text-center">
                 {record.changedBy.name}
               </TableCell>
-              <TableCell />
             </TableRow>
           ))}
         </TableBody>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -9,21 +9,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/components/ui/table";
-import { Input } from "@/app/components/ui/input";
-import { Button } from "@/app/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/app/components/ui/dialog";
 import { Badge } from "@/app/components/ui/badge";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Search, ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
 import { Order } from "@/app/types/order";
 import { format, parseISO } from "date-fns";
 import { getStatusLabel, getStatusColor } from "@/app/types/order";
 import { StatusHistoryTable } from "./status-history-table";
+import { AuthenticatedImage } from "./authenticated-image";
 
 // Datos mockeados
 const mockOrders: Order[] = [
   {
     id: 1,
+    orderCode: "ORD-001",
+    shippingCode: "SHIP-001",
+    orderOrigin: "Tienda Online",
     status: "RECIBIDO",
-    assignedTo: "user1",
+    assignedTo: 1,
     assignedToName: "Juan Pérez",
     createdAt: "2024-03-20T10:00:00Z",
     updatedAt: "2024-03-20T10:00:00Z",
@@ -57,11 +67,15 @@ const mockOrders: Order[] = [
         changedBy: { id: 3, name: "Carlos López" },
       },
     ],
+    packageImageUrl: "https://example.com/package-image-1.jpg",
   },
   {
     id: 2,
+    orderCode: "ORD-002",
+    shippingCode: "SHIP-002",
+    orderOrigin: "Mercado Libre",
     status: "ENTREGADO",
-    assignedTo: "user2",
+    assignedTo: 2,
     assignedToName: "Ana Martínez",
     createdAt: "2024-03-19T09:00:00Z",
     updatedAt: "2024-03-19T15:30:00Z",
@@ -123,11 +137,15 @@ const mockOrders: Order[] = [
         changedBy: { id: 4, name: "Roberto Sánchez" },
       },
     ],
+    packageImageUrl: "https://example.com/package-image-2.jpg",
   },
   {
     id: 3,
+    orderCode: "ORD-003",
+    shippingCode: "SHIP-003",
+    orderOrigin: "Tienda Física",
     status: "EN_PREPARACION",
-    assignedTo: "user3",
+    assignedTo: 3,
     assignedToName: "Pedro Rodríguez",
     createdAt: "2024-03-20T08:00:00Z",
     updatedAt: "2024-03-20T08:00:00Z",
@@ -147,6 +165,7 @@ const mockOrders: Order[] = [
         changedBy: { id: 2, name: "María García" },
       },
     ],
+    packageImageUrl: "https://example.com/package-image-3.jpg",
   },
 ];
 
@@ -158,7 +177,14 @@ export function MetricsTable({ orders }: MetricsTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    setAuthToken(token);
+  }, []);
 
   const filteredOrders = orders.filter(
     (order) =>
@@ -168,6 +194,9 @@ export function MetricsTable({ orders }: MetricsTableProps) {
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       (order.shippingCode || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (order.orderOrigin || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase()),
   );
@@ -201,6 +230,29 @@ export function MetricsTable({ orders }: MetricsTableProps) {
         </div>
       </div>
 
+      {selectedImageUrl && (
+        <Dialog
+          open={!!selectedImageUrl}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setSelectedImageUrl(null);
+            }
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Imagen del Paquete</DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center items-center p-4">
+              <AuthenticatedImage
+                imageUrl={selectedImageUrl}
+                token={authToken}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -208,18 +260,19 @@ export function MetricsTable({ orders }: MetricsTableProps) {
               <TableHead className="w-[50px]"></TableHead>
               <TableHead>ID</TableHead>
               <TableHead>Código</TableHead>
+              <TableHead>Origen</TableHead>
               <TableHead>Envío</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Responsable</TableHead>
               <TableHead>Fecha de Creación</TableHead>
               <TableHead>Última actualización</TableHead>
+              <TableHead className="text-right">Imagen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedOrders.map((order) => (
-              <>
+              <React.Fragment key={order.id}>
                 <TableRow
-                  key={order.id}
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() =>
                     setExpandedOrderId(
@@ -239,11 +292,10 @@ export function MetricsTable({ orders }: MetricsTableProps) {
                     <div className="font-medium">{order.orderCode}</div>
                   </TableCell>
                   <TableCell>
-                    {order.shippingCode ? (
-                      <span>{order.shippingCode}</span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
+                    {order.orderOrigin || "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {order.shippingCode || "N/A"}
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(order.status)}>
@@ -253,15 +305,31 @@ export function MetricsTable({ orders }: MetricsTableProps) {
                   <TableCell>{order.assignedToName || "No asignado"}</TableCell>
                   <TableCell>{formatDateTime(order.createdAt)}</TableCell>
                   <TableCell>{formatDateTime(order.updatedAt)}</TableCell>
+                  <TableCell className="text-right">
+                    {order.imageUrl ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedImageUrl(order.imageUrl || null);
+                        }}
+                      >
+                        <ImageIcon className="h-5 w-5" />
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">N/A</span>
+                    )}
+                  </TableCell>
                 </TableRow>
                 {expandedOrderId === order.id && order.statusHistory && (
                   <TableRow>
-                    <TableCell colSpan={8} className="p-0 bg-transparent">
+                    <TableCell colSpan={10} className="p-0 bg-transparent">
                       <StatusHistoryTable history={order.statusHistory} />
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </React.Fragment>
             ))}
           </TableBody>
         </Table>
@@ -285,6 +353,34 @@ export function MetricsTable({ orders }: MetricsTableProps) {
           >
             Siguiente
           </Button>
+        </div>
+      )}
+      {/* Modal para ver imagen */}
+      {selectedImageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+          onClick={() => setSelectedImageUrl(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-full p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white p-4 rounded-lg">
+              <AuthenticatedImage
+                imageUrl={selectedImageUrl}
+                token={authToken}
+              />
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImageUrl(null);
+              }}
+              className="absolute -top-2 -right-2 p-1 bg-white rounded-full text-gray-800 hover:bg-gray-200 shadow-lg"
+            >
+              <ChevronDown className="h-6 w-6" />
+            </button>
+          </div>
         </div>
       )}
     </div>

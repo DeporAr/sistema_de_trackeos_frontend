@@ -22,6 +22,7 @@ interface User {
   username: string;
   email: string;
   role: string;
+  duxId?: string;
 }
 
 export default function UsersPage() {
@@ -40,6 +41,7 @@ export default function UsersPage() {
     fullName: "",
     userName: "",
     role: "preparador",
+    duxId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,6 +96,7 @@ export default function UsersPage() {
         username: user.username,
         email: user.email,
         role: user.role,
+        duxId: user.duxId,
       }));
       setUsers(transformedData);
     } catch (error) {
@@ -149,6 +152,10 @@ export default function UsersPage() {
       errors.role = "El rol es requerido";
     }
 
+    if (!formData.duxId) {
+      errors.duxId = "El DUX ID es requerido";
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -162,6 +169,7 @@ export default function UsersPage() {
       fullName: "",
       userName: "",
       role: "preparador",
+      duxId: "",
     });
     setFormErrors({});
     setShowForm(true);
@@ -176,6 +184,7 @@ export default function UsersPage() {
       fullName: user.name,
       userName: user.username,
       role: user.role,
+      duxId: user.duxId || "",
     });
     setFormErrors({});
     setShowForm(true);
@@ -219,6 +228,7 @@ export default function UsersPage() {
               name: formData.fullName,
               username: formData.userName,
               role: formData.role.toUpperCase(),
+              duxId: formData.duxId,
               ...(formData.password && { password: formData.password }),
             }),
           },
@@ -240,6 +250,7 @@ export default function UsersPage() {
           userName: formData.userName.trim(),
           password: formData.password,
           role: formData.role.toUpperCase(),
+          duxId: formData.duxId.trim(),
         };
 
         console.log("Enviando datos:", userData); // Para debugging
@@ -372,6 +383,9 @@ export default function UsersPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Rol
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    DUX ID
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acciones
                   </th>
@@ -380,7 +394,7 @@ export default function UsersPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loadingUsers ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center">
+                    <td colSpan={6} className="px-6 py-4 text-center">
                       <div className="flex justify-center">
                         <Loader2 className="w-6 h-6 animate-spin text-primary" />
                       </div>
@@ -389,7 +403,7 @@ export default function UsersPage() {
                 ) : users.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-6 py-4 text-center text-gray-500"
                     >
                       No hay usuarios registrados
@@ -409,6 +423,9 @@ export default function UsersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap capitalize">
                         {user.role}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {user.duxId || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
@@ -448,19 +465,22 @@ export default function UsersPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmitForm} className="p-4">
-                <div className="space-y-4">
+              <form onSubmit={handleSubmitForm} className="p-6">
+                <div className="grid grid-cols-1 gap-6">
+                  {/* Campo de Email */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       Email
                     </label>
                     <input
+                      id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) =>
-                        handleFormChange("email", e.target.value)
-                      }
-                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
+                      onChange={(e) => handleFormChange("email", e.target.value)}
+                      className={`mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
                         formErrors.email ? "border-red-500" : ""
                       }`}
                     />
@@ -471,19 +491,24 @@ export default function UsersPage() {
                     )}
                   </div>
 
+                  {/* Campo de Contraseña */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       {editingUser
                         ? "Nueva Contraseña (opcional)"
                         : "Contraseña"}
                     </label>
                     <input
+                      id="password"
                       type="password"
                       value={formData.password}
                       onChange={(e) =>
                         handleFormChange("password", e.target.value)
                       }
-                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
+                      className={`mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
                         formErrors.password ? "border-red-500" : ""
                       }`}
                     />
@@ -494,17 +519,22 @@ export default function UsersPage() {
                     )}
                   </div>
 
+                  {/* Campo de Nombre Completo */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="fullName"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       Nombre Completo
                     </label>
                     <input
+                      id="fullName"
                       type="text"
                       value={formData.fullName}
                       onChange={(e) =>
                         handleFormChange("fullName", e.target.value)
                       }
-                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
+                      className={`mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
                         formErrors.fullName ? "border-red-500" : ""
                       }`}
                     />
@@ -515,17 +545,22 @@ export default function UsersPage() {
                     )}
                   </div>
 
+                  {/* Campo de Nombre de Usuario */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="userName"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       Nombre de Usuario
                     </label>
                     <input
+                      id="userName"
                       type="text"
                       value={formData.userName}
                       onChange={(e) =>
                         handleFormChange("userName", e.target.value)
                       }
-                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
+                      className={`mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
                         formErrors.userName ? "border-red-500" : ""
                       }`}
                     />
@@ -536,20 +571,50 @@ export default function UsersPage() {
                     )}
                   </div>
 
+                  {/* Campo de Rol */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="role"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       Rol
                     </label>
                     <select
+                      id="role"
                       value={formData.role}
                       onChange={(e) => handleFormChange("role", e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                      className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     >
                       <option value="PREPARADOR">Preparador</option>
                       <option value="EMBALADOR">Embalador</option>
                       <option value="DESPACHADOR">Despachador</option>
                       <option value="RECIBIDOR">Recibidor</option>
                     </select>
+                  </div>
+
+                  {/* Campo de DUX ID */}
+                  <div>
+                    <label
+                      htmlFor="duxId"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      DUX ID
+                    </label>
+                    <input
+                      id="duxId"
+                      type="text"
+                      value={formData.duxId}
+                      onChange={(e) => handleFormChange("duxId", e.target.value)}
+                      className={`mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm ${
+                        formErrors.duxId ? "border-red-500" : ""
+                      }`}
+                      placeholder="Ingrese el DUX ID"
+                    />
+                    {formErrors.duxId && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.duxId}
+                      </p>
+                    )}
                   </div>
                 </div>
 

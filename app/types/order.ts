@@ -24,12 +24,14 @@ export interface Order {
   id: number;
   orderCode: string;
   shippingCode: string | null;
+  orderOrigin: string;
   status: OrderStatus;
   assignedTo: number;
   assignedToName: string;
   createdAt: string;
   updatedAt: string;
   statusHistory: OrderStatusHistory[];
+  imageUrl?: string | null;
 }
 
 export const statusLabels: Record<OrderStatus, string> = {
