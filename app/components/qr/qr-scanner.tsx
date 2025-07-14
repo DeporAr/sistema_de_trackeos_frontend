@@ -1,92 +1,75 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/app/components/ui/button";
 import { X } from "lucide-react";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 
 interface QrScannerProps {
   onScan: (data: string) => void;
   onClose: () => void;
 }
 
+const qrScannerId = "html5-qr-code-scanner";
+
 export default function QrScanner({ onScan, onClose }: QrScannerProps) {
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const hasScannedRef = useRef(false);
+  const onScanRef = useRef(onScan);
+  onScanRef.current = onScan;
 
   useEffect(() => {
-    if (!containerRef.current || isScanning || hasScannedRef.current) return;
+    const scanner = new Html5Qrcode(qrScannerId, { verbose: false });
 
-    const qrScannerId = "html5-qr-code-scanner";
-    const qrContainer = document.createElement("div");
-    qrContainer.id = qrScannerId;
-    containerRef.current.appendChild(qrContainer);
-
-    scannerRef.current = new Html5Qrcode(qrScannerId);
-
-    const startScanner = async () => {
-      try {
-        setIsScanning(true);
-        await scannerRef.current?.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-          },
-          (decodedText) => {
-            if (hasScannedRef.current) return;
-
-            try {
-              // Intentar parsear como JSON
-              const parsedData = JSON.parse(decodedText);
-              // Si es un objeto, convertirlo a string
-              const stringData =
-                typeof parsedData === "object"
-                  ? JSON.stringify(parsedData)
-                  : decodedText;
-              hasScannedRef.current = true;
-              onScan(stringData);
-            } catch (e) {
-              // Si no es JSON válido, usar el texto tal cual
-              hasScannedRef.current = true;
-              onScan(decodedText);
-            }
-            stopScanner();
-          },
-          (errorMessage) => {
-            console.log(errorMessage);
-          },
-        );
-      } catch (err) {
-        console.error("Error starting QR scanner:", err);
-        setIsScanning(false);
-      }
+    const handleSuccess = (decodedText: string) => {
+      onScanRef.current(decodedText);
     };
 
-    startScanner();
+    const handleError = (errorMessage: string) => {
+      // Silently ignore errors. This prevents spamming the console.
+    };
+
+    const config = {
+      fps: 10,
+      qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        const qrboxSize = Math.floor(minEdge * 0.8);
+        return {
+          width: qrboxSize,
+          height: qrboxSize,
+        };
+      },
+    };
+
+    scanner.start(
+      { facingMode: "environment" },
+      config,
+      handleSuccess,
+      handleError
+    ).catch((err) => {
+      console.error("Unable to start scanning.", err);
+    });
 
     return () => {
+      const stopScanner = async () => {
+        try {
+          if (scanner && scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+            await scanner.stop();
+          }
+          // Forzar la limpieza del DOM para evitar renderizados duplicados en desarrollo
+          const scannerElement = document.getElementById(qrScannerId);
+          if (scannerElement) {
+            scannerElement.innerHTML = "";
+          }
+        } catch (err) {
+          console.error("Failed to stop the scanner on unmount.", err);
+        }
+      };
       stopScanner();
     };
   }, []);
 
-  const stopScanner = () => {
-    if (scannerRef.current?.isScanning) {
-      scannerRef.current
-        .stop()
-        .catch((err) => console.error("Error stopping scanner:", err));
-      setIsScanning(false);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-4">
-      <div
-        ref={containerRef}
-        className="w-full h-64 bg-muted rounded-md overflow-hidden border border-primary/20"
-      ></div>
+      <div id={qrScannerId} className="w-full"></div>
       <p className="text-sm text-center text-muted-foreground">
         Position the Mercado Libre order QR code within the frame
       </p>

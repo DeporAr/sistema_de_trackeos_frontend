@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/auth-context";
+import { useAuth } from "@/app/context/auth-context";
 import { useRouter } from "next/navigation";
 import { Scanner, IDetectedBarcode } from "@yudiel/react-qr-scanner";
 
@@ -109,17 +109,33 @@ export default function OrderScanner() {
 
         <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
           {scanning ? (
-            <div className="relative aspect-square">
+            <div className="relative w-full aspect-square">
               <Scanner
                 onScan={handleScan}
                 onError={handleError}
                 constraints={{
                   facingMode: "environment",
                 }}
+                components={{
+                  finder: false,
+                }}
                 classNames={{
                   container: "w-full h-full",
                 }}
               />
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "40%",
+                  height: "40%",
+                  border: "5px solid white",
+                  borderRadius: "10px",
+                  boxShadow: "0 0 0 100vmax rgba(0, 0, 0, 0.5)",
+                }}
+              ></div>
             </div>
           ) : (
             <div className="text-center py-8">

@@ -152,7 +152,7 @@ export function MetricsFilters({
             <SelectTrigger id="status">
               <SelectValue placeholder="Seleccionar estado" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-gray-50">
               <SelectItem value="ALL">Todos</SelectItem>
               <SelectItem value="RECIBIDO">Recibido</SelectItem>
               <SelectItem value="EN_PREPARACION">En Preparación</SelectItem>

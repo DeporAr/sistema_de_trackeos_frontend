@@ -76,53 +76,53 @@ export default function MetricsPage() {
 
   useEffect(() => {
     if (user && user.role?.name === "ADMIN") {
-      const fetchMetrics = async () => {
-        setIsLoadingMetrics(true);
-        try {
-          const queryParams = new URLSearchParams();
+  const fetchMetrics = async () => {
+    setIsLoadingMetrics(true);
+    try {
+      const queryParams = new URLSearchParams();
 
-          // Solo agregar los parámetros que tienen valor
-          if (filters.fecha_inicio)
-            queryParams.append("fecha_inicio", filters.fecha_inicio);
+      // Solo agregar los parámetros que tienen valor
+      if (filters.fecha_inicio)
+        queryParams.append("fecha_inicio", filters.fecha_inicio);
           if (filters.fecha_fin)
             queryParams.append("fecha_fin", filters.fecha_fin);
-          if (filters.responsable)
-            queryParams.append("responsable", filters.responsable);
+      if (filters.responsable)
+        queryParams.append("responsable", filters.responsable);
           if (filters.pedido_id)
             queryParams.append("pedido_id", filters.pedido_id);
-          if (filters.estado) queryParams.append("estado", filters.estado);
-          if (filters.time_range)
-            queryParams.append("time_range", filters.time_range);
+      if (filters.estado) queryParams.append("estado", filters.estado);
+      if (filters.time_range)
+        queryParams.append("time_range", filters.time_range);
 
-          queryParams.append("page", (currentPage - 1).toString());
-          queryParams.append("size", "20");
-          console.log("Enviando filtros:", queryParams.toString());
+      queryParams.append("page", (currentPage - 1).toString());
+      queryParams.append("size", "20");
+      console.log("Enviando filtros:", queryParams.toString());
 
-          const response = await fetch(
-            `https://incredible-charm-production.up.railway.app/metricas?${queryParams.toString()}`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-              },
-            },
-          );
-          if (!response.ok) {
-            throw new Error("Error al cargar las métricas");
-          }
+      const response = await fetch(
+        `https://incredible-charm-production.up.railway.app/metricas?${queryParams.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        },
+      );
+      if (!response.ok) {
+        throw new Error("Error al cargar las métricas");
+      }
 
-          const data = await response.json();
-          setMetrics(data);
-        } catch (error) {
-          console.error("Error fetching metrics:", error);
-          toast({
-            title: "Error",
-            description: "No se pudieron cargar las métricas",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoadingMetrics(false);
-        }
-      };
+      const data = await response.json();
+      setMetrics(data);
+    } catch (error) {
+      console.error("Error fetching metrics:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las métricas",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingMetrics(false);
+    }
+  };
 
       fetchMetrics();
     }

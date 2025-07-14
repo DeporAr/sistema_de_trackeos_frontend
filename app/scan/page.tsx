@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth-context";
 import { UserRole } from "@/app/types/user";
@@ -44,6 +44,11 @@ export default function ScanPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [scannerKey, setScannerKey] = useState(0);
+
+  // Usamos refs para evitar que las funciones de useCallback se recreen constantemente
+  const stateRef = useRef({ hasProcessedQr, isProcessing });
+  stateRef.current = { hasProcessedQr, isProcessing };
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -51,16 +56,14 @@ export default function ScanPage() {
     }
   }, [user, isLoading, router]);
 
-  const handleJwtError = () => {
-    // Limpiar el token y el estado
+  const handleJwtError = useCallback(() => {
     localStorage.removeItem("authToken");
     logout();
-    // Redirigir al login
     router.push("/login");
-  };
+  }, [logout, router]);
 
-  const fetchOrderData = async (orderId: string) => {
-    if (hasProcessedQr) return;
+  const fetchOrderData = useCallback(async (orderId: string) => {
+    if (stateRef.current.hasProcessedQr) return;
 
     setIsProcessing(true);
     setError(null);
@@ -70,7 +73,6 @@ export default function ScanPage() {
         throw new Error("No hay token de autenticación");
       }
 
-      console.log("Llamando a la API con ID:", orderId);
       const response = await fetch(
         `https://incredible-charm-production.up.railway.app/orders/qr/${orderId}`,
         {
@@ -82,9 +84,6 @@ export default function ScanPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error de la API:", errorData);
-
-        // Verificar si es un error de JWT expirado
         if (
           errorData.status === 403 &&
           errorData.detail?.includes("JWT expired")
@@ -92,56 +91,54 @@ export default function ScanPage() {
           handleJwtError();
           return;
         }
-
         throw new Error(errorData.error || "Error al obtener el pedido");
       }
 
       const data = await response.json();
-      console.log("Respuesta de la API:", data);
       setOrder({
         ...data,
         orderCode: data.orderCode.toString(),
       });
       setHasProcessedQr(true);
-    } catch (error) {
-      console.error("Error al obtener el pedido:", error);
+    } catch (err) {
       setError(
-        error instanceof Error ? error.message : "Error al obtener el pedido",
+        err instanceof Error ? err.message : "Error al obtener el pedido",
       );
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [handleJwtError]);
 
-  const handleScan = async (data: string) => {
-    if (hasProcessedQr || isProcessing) {
+  const handleScan = useCallback(async (data: string) => {
+    if (stateRef.current.hasProcessedQr || stateRef.current.isProcessing) {
       return;
     }
-
+    console.log("Datos crudos del QR:", data);
     try {
-      console.log("Data del QR recibida:", data);
-
-      // Intentar parsear el QR como JSON
       let orderId: string;
       try {
+        // Parsear el JSON y extraer el ID
         const qrData = JSON.parse(data);
-        orderId = qrData.orderId || qrData.id;
-        console.log("ID extraído del QR:", orderId);
+        orderId = qrData.id;
       } catch {
-        // Si no es JSON, usar el string directamente
+        // Si no es JSON, usar el dato crudo (para compatibilidad)
         orderId = data;
-        console.log("Usando data directa como ID:", orderId);
       }
 
-      setScannedQrData(data);
-      await fetchOrderData(orderId);
-    } catch (error) {
-      console.error("Error al procesar el código QR:", error);
-    }
-  };
+      if (!orderId) {
+        throw new Error("El código QR no contiene un ID válido.");
+      }
 
-  const handleManualEntry = async (orderId: string) => {
-    if (hasProcessedQr || isProcessing) {
+      setScannedQrData(orderId);
+      await fetchOrderData(orderId);
+    } catch (err) {
+      console.error("Error al procesar el código QR:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    }
+  }, [fetchOrderData]);
+
+  const handleManualEntry = useCallback(async (orderId: string) => {
+    if (stateRef.current.hasProcessedQr || stateRef.current.isProcessing) {
       return;
     }
 
@@ -171,27 +168,29 @@ export default function ScanPage() {
         orderCode: data.orderCode.toString(),
       });
       setHasProcessedQr(true);
-    } catch (error) {
+    } catch (err) {
       setError(
-        error instanceof Error
-          ? error.message
+        err instanceof Error
+          ? err.message
           : "Error al obtener el pedido manual",
       );
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [handleJwtError]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setScannedQrData(null);
     setOrder(null);
     setError(null);
     setHasProcessedQr(false);
     setSelectedImage(null);
     setPreviewUrl(null);
-  };
+    stateRef.current.hasProcessedQr = false;
+    setScannerKey(prevKey => prevKey + 1);
+  }, []);
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedImage(file);
@@ -201,9 +200,9 @@ export default function ScanPage() {
       };
       reader.readAsDataURL(file);
     }
-  };
+  }, []);
 
-  const handleUploadImage = async () => {
+  const handleUploadImage = useCallback(async () => {
     if (!selectedImage || !order) return;
 
     setIsUploading(true);
@@ -217,10 +216,9 @@ export default function ScanPage() {
 
       const formData = new FormData();
       formData.append("file", selectedImage);
-      formData.append("orderId", order.id);
 
       const response = await fetch(
-        "https://incredible-charm-production.up.railway.app/api/volume/upload",
+        `https://incredible-charm-production.up.railway.app/api/volume/upload?order_id=${scannedQrData}`,
         {
           method: "POST",
           headers: {
@@ -236,7 +234,6 @@ export default function ScanPage() {
           return;
         }
         const errorText = await response.text();
-        console.error("Server error on image upload:", errorText);
         throw new Error(
           "Ocurrió un error en el servidor al subir la imagen. Por favor, intente de nuevo más tarde.",
         );
@@ -249,17 +246,16 @@ export default function ScanPage() {
       );
 
       alert("Imagen subida con éxito.");
-    } catch (error) {
+    } catch (err) {
       const errorMessage =
-        error instanceof Error ? error.message : "Ocurrió un error desconocido";
+        err instanceof Error ? err.message : "Ocurrió un error desconocido";
       setError(errorMessage);
       alert(`Error al subir la imagen: ${errorMessage}`);
     } finally {
       setIsUploading(false);
       setSelectedImage(null);
-      setPreviewUrl(null);
     }
-  };
+  }, [selectedImage, order, handleJwtError, scannedQrData]);
 
   if (isLoading) {
     return (
@@ -276,12 +272,7 @@ export default function ScanPage() {
     return null; // La redirección se maneja en el useEffect
   }
 
-  // Asegurarnos de que scannedQrData sea un string antes de renderizar
-  const qrDataString = scannedQrData
-    ? typeof scannedQrData === "string"
-      ? scannedQrData
-      : JSON.stringify(scannedQrData)
-    : null;
+  const qrDataString = scannedQrData;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -317,7 +308,7 @@ export default function ScanPage() {
               </div>
 
               {activeTab === "scan" ? (
-                <QrScanner onScan={handleScan} onClose={() => {}} />
+                <QrScanner key={scannerKey} onScan={handleScan} onClose={() => {}} />
               ) : (
                 <form
                   onSubmit={async (e) => {
@@ -403,59 +394,52 @@ export default function ScanPage() {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                               {order.products.map((item) => (
-                                <tr key={item.id} className="hover:bg-gray-50">
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {item.id}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {item.description}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {item.quantity}
-                                  </td>
+                                <tr key={item.id}>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.id}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.description}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                         </div>
                       ) : (
-                        <div className="text-center text-gray-500 py-4">
-                          Este pedido no tiene productos asociados.
-                        </div>
+                        <p>No hay productos en este pedido.</p>
                       )}
 
-                      {/* Sección para subir imagen */}
-                      <div className="mt-6 pt-6 border-t border-gray-200">
-                        <h4 className="text-md font-semibold mb-4">Imagen del Paquete</h4>
-                        {order.packageImageUrl ? (
-                          <div>
-                            <img src={order.packageImageUrl} alt="Imagen del paquete" className="rounded-md max-w-full h-auto" />
+                      {qrDataString && user?.role && (
+                        <OrderStatusUpdate
+                          qrData={qrDataString}
+                          onStatusChange={(updatedOrder) => setOrder(prevOrder => ({ ...prevOrder, ...updatedOrder }))}
+                          userRole={user.role as UserRole}
+                        />
+                      )}
+
+                      <div className="mt-6 border-t pt-4">
+                        <Label htmlFor="package-image" className="font-medium text-gray-700">Imagen del Paquete</Label>
+                        <div className="flex items-center gap-4 mt-2">
+                          <Input
+                            id="package-image"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            ref={fileInputRef}
+                            className="flex-1"
+                          />
+                          <Button onClick={handleUploadImage} disabled={!selectedImage || isUploading}>
+                            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Subir"}
+                          </Button>
+                        </div>
+                        {previewUrl && (
+                          <div className="mt-4">
+                            <p className="text-sm font-medium">Vista previa:</p>
+                            <img src={previewUrl} alt="Vista previa" className="max-w-xs rounded-md border mt-1" />
                           </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-center w-full">
-                              <Label htmlFor="picture" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                                {
-                                  previewUrl ? (
-                                    <img src={previewUrl} alt="Vista previa" className="h-full w-full object-contain" />
-                                  ) : (
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                      <Camera className="w-8 h-8 mb-2 text-gray-500" />
-                                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click para subir</span> o arrastra y suelta</p>
-                                      <p className="text-xs text-gray-500">PNG, JPG (MAX. 800x400px)</p>
-                                    </div>
-                                  )
-                                }
-                                <Input id="picture" type="file" className="hidden" onChange={handleImageChange} accept="image/png, image/jpeg" ref={fileInputRef} />
-                              </Label>
-                            </div>
-                            {selectedImage && (
-                              <div className="flex justify-center">
-                                <Button onClick={handleUploadImage} disabled={isUploading}>
-                                  {isUploading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subiendo...</> : "Subir Imagen"}
-                                </Button>
-                              </div>
-                            )}
+                        )}
+                        {order.packageImageUrl && !previewUrl && (
+                          <div className="mt-4">
+                            <p className="text-sm font-medium">Imagen actual:</p>
+                            <img src={order.packageImageUrl} alt="Imagen del paquete" className="max-w-xs rounded-md border mt-1" />
                           </div>
                         )}
                       </div>
@@ -464,16 +448,7 @@ export default function ScanPage() {
                 )
               )}
 
-              {user && (
-                <OrderStatusUpdate
-                  qrData={qrDataString}
-                  userRole={user.role}
-                  userId={user.id.toString()}
-                  userName={user.name}
-                />
-              )}
-
-              <div className="flex justify-center">
+              <div className="flex justify-center mt-6">
                 <button
                   onClick={handleReset}
                   className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"

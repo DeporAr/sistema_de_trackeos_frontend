@@ -61,18 +61,20 @@ const statusLabels: Record<OrderStatus, string> = {
   ENTREGADO: "Entregado",
 };
 
+interface Order {
+  id: string;
+  status: string;
+}
 interface OrderStatusUpdateProps {
   qrData: string;
+  onStatusChange: (updatedOrder: Order) => void;
   userRole: Role;
-  userId: string;
-  userName: string;
 }
 
 export default function OrderStatusUpdate({
   qrData,
+  onStatusChange,
   userRole,
-  userId,
-  userName,
 }: OrderStatusUpdateProps) {
   const router = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(
@@ -81,25 +83,19 @@ export default function OrderStatusUpdate({
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [hasProcessedQr, setHasProcessedQr] = useState(false);
 
   // Convertir el nombre del rol a minúsculas para el mapeo
-  const normalizedRole = userRole.name.toLowerCase() as UserRole;
-
+  const normalizedRole = userRole?.name?.toLowerCase() as UserRole;
   // Get allowed statuses for this user role
   const allowedStatuses = roleStatusMap[normalizedRole] || [];
 
-  // Los estados permitidos se obtienen del mapeo de roles
-
   const handleJwtError = () => {
-    // Limpiar el token
     localStorage.removeItem("authToken");
-    // Redirigir al login
     router.push("/login");
   };
 
   const updateStatus = async () => {
-    if (!selectedStatus || hasProcessedQr) return;
+    if (!selectedStatus) return;
 
     setIsUpdating(true);
     setIsSuccess(false);
@@ -111,26 +107,14 @@ export default function OrderStatusUpdate({
         throw new Error("No hay token de autenticación");
       }
 
-      // Extraer el ID del pedido del QR
-      let orderId: string;
-      try {
-        const qrDataObj = JSON.parse(qrData);
-        orderId = qrDataObj.orderId || qrDataObj.id;
-      } catch {
-        orderId = qrData;
-      }
-
-      // Llamada a la API para actualizar el estado
       const requestBody = {
         orderStatus: selectedStatus,
-        userId,
-        userName,
-        userRole: normalizedRole,
+        userId: userRole.id, // Suponiendo que el ID del usuario está en userRole
+        userName: userRole.name, // Suponiendo que el nombre está en userRole
       };
-      console.log("Enviando petición con body:", requestBody);
 
       const response = await fetch(
-        `https://incredible-charm-production.up.railway.app/orders/${orderId}/status`,
+        `https://incredible-charm-production.up.railway.app/orders/${qrData}/status`,
         {
           method: "PUT",
           headers: {
@@ -143,9 +127,6 @@ export default function OrderStatusUpdate({
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error de la API:", errorData);
-
-        // Verificar si es un error de JWT expirado
         if (
           errorData.status === 403 &&
           errorData.detail?.includes("JWT expired")
@@ -153,15 +134,12 @@ export default function OrderStatusUpdate({
           handleJwtError();
           return;
         }
-
         throw new Error(errorData.error || "Error al actualizar el estado");
       }
 
-      const responseData = await response.json();
-      console.log("Respuesta de la API:", responseData);
-
+      const updatedOrder = await response.json();
+      onStatusChange(updatedOrder); // Notificar al padre sobre el cambio
       setIsSuccess(true);
-      setHasProcessedQr(true);
     } catch (error) {
       console.error("Error updating status:", error);
       setErrorMessage(
@@ -174,84 +152,62 @@ export default function OrderStatusUpdate({
     }
   };
 
-  // Resetear el estado cuando cambia el QR
   useEffect(() => {
     setSelectedStatus(null);
     setIsSuccess(false);
     setErrorMessage(null);
-    setHasProcessedQr(false);
   }, [qrData]);
 
-  if (allowedStatuses.length === 0) {
+  if (!userRole || !allowedStatuses.length) {
     return (
-      <Card className="border-primary/20">
-        <CardHeader className="border-b border-primary/10">
-          <CardTitle className="font-akira text-primary">
-            Actualizar Estado
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Tu rol no tiene permisos para actualizar estados de pedidos.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+        <p className="text-sm text-yellow-700">
+          Tu rol no tiene permisos para cambiar el estado de este pedido.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card className="border-primary/20">
-      <CardHeader className="border-b border-primary/10">
-        <CardTitle className="font-akira text-primary">
-          Actualizar Estado del Pedido
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-4">
+    <div className="mt-6 border-t pt-4">
+      <h3 className="text-lg font-medium text-gray-800">Actualizar Estado</h3>
+      <div className="mt-4 space-y-4">
         <RadioGroup
           value={selectedStatus || ""}
           onValueChange={(value) => setSelectedStatus(value as OrderStatus)}
-          disabled={hasProcessedQr}
+          disabled={isSuccess || isUpdating}
         >
           <div className="grid grid-cols-2 gap-4">
             {allowedStatuses.map((status) => (
               <div key={status} className="flex items-center space-x-2">
-                <RadioGroupItem
-                  value={status}
-                  id={status}
-                  className="text-primary border-primary"
-                />
-                <Label htmlFor={status} className="cursor-pointer">
-                  {statusLabels[status]}
-                </Label>
+                <RadioGroupItem value={status} id={status} />
+                <Label htmlFor={status}>{statusLabels[status]}</Label>
               </div>
             ))}
           </div>
         </RadioGroup>
 
-        {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+        {errorMessage && (
+          <p className="text-sm text-red-500">{errorMessage}</p>
+        )}
 
         <Button
           onClick={updateStatus}
-          disabled={
-            !selectedStatus || isUpdating || isSuccess || hasProcessedQr
-          }
-          className="w-full bg-primary hover:bg-primary/90"
+          disabled={!selectedStatus || isUpdating || isSuccess}
+          className="w-full"
         >
           {isUpdating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Actualizando...
-            </>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : isSuccess ? (
-            <>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              ¡Estado Actualizado!
-            </>
-          ) : (
-            "Actualizar Estado"
-          )}
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+          ) : null}
+          {isUpdating
+            ? "Actualizando..."
+            : isSuccess
+              ? "¡Estado Actualizado!"
+              : "Confirmar Cambio de Estado"}
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
