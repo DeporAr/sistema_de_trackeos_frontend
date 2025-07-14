@@ -45,6 +45,7 @@ export function MetricsTable({ orders, totalPages, currentPage, setCurrentPage }
 
   const formatDateTime = (dateString: string) => {
     try {
+
       return format(parseISO(dateString), "dd/MM/yyyy HH:mm");
     } catch (error) {
       return dateString;
