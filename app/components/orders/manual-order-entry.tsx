@@ -317,25 +317,31 @@ export function ManualOrderForm({
 }
 
 // --- LISTADO Y BUSCADOR ---
+import type { ManualOrderPage } from "@/app/types/manual-order";
+
 export function ManualOrderList({ searchQuery }: { searchQuery: string }) {
-  const [manualOrders, setManualOrders] = useState<ManualOrder[]>([]);
+  const [manualOrdersPage, setManualOrdersPage] = useState<ManualOrderPage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const size = 10;
 
   useEffect(() => {
-    fetchManualOrders();
-  }, []);
+    fetchManualOrders(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
-  const fetchManualOrders = async () => {
+  const fetchManualOrders = async (pageNumber: number) => {
+    setIsLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${API_BASE_URL}/api/orders/manual`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/manual?page=${pageNumber}&size=${size}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       if (response.ok) {
         const data = await response.json();
-        setManualOrders(data);
+        setManualOrdersPage(data);
       }
     } catch (error) {
       console.error("Error fetching manual orders:", error);
@@ -357,7 +363,7 @@ export function ManualOrderList({ searchQuery }: { searchQuery: string }) {
     }
   };
 
-  const filteredOrders = manualOrders.filter((order) => {
+  const filteredOrders = manualOrdersPage?.content.filter((order: any) => {
     const searchLower = searchQuery.toLowerCase();
     return (
       order.id?.toString().includes(searchLower) ||
@@ -367,7 +373,7 @@ export function ManualOrderList({ searchQuery }: { searchQuery: string }) {
         .includes(searchLower) ||
       (order.shippingData?.address || "").toLowerCase().includes(searchLower)
     );
-  });
+  }) || [];
 
   return (
     <div className="space-y-4">
@@ -389,7 +395,7 @@ export function ManualOrderList({ searchQuery }: { searchQuery: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.map((order) => (
+              {filteredOrders.map((order: any) => (
                 <TableRow key={order.id}>
                   <TableCell>{order.id}</TableCell>
                   <TableCell>{order.orderCode}</TableCell>
@@ -415,6 +421,32 @@ export function ManualOrderList({ searchQuery }: { searchQuery: string }) {
               )}
             </TableBody>
           </Table>
+          {/* Controles de paginación */}
+          {manualOrdersPage && manualOrdersPage.totalPages > 1 && (
+            <div className="flex justify-between items-center p-2">
+              <span>
+                Página {manualOrdersPage.number + 1} de {manualOrdersPage.totalPages}
+              </span>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={manualOrdersPage.first}
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={manualOrdersPage.last}
+                  onClick={() => setPage((prev) => prev + 1)}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

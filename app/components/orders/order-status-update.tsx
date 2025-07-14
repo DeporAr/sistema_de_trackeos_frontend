@@ -89,10 +89,7 @@ export default function OrderStatusUpdate({
   // Get allowed statuses for this user role
   const allowedStatuses = roleStatusMap[normalizedRole] || [];
 
-  // Debug logs
-  console.log("Rol recibido:", userRole);
-  console.log("Rol normalizado:", normalizedRole);
-  console.log("Estados permitidos:", allowedStatuses);
+  // Los estados permitidos se obtienen del mapeo de roles
 
   const handleJwtError = () => {
     // Limpiar el token

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth-context";
 import { MetricsFilters } from "@/app/components/metrics/metrics-filters";
@@ -8,7 +8,8 @@ import { MetricsCharts } from "@/app/components/metrics/metrics-charts";
 import { MetricsTable } from "@/app/components/metrics/metrics-table";
 import { Button } from "@/app/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { getStatusLabel, Order } from "@/app/types/order";
+import { getStatusLabel } from "@/app/types/order";
+import { OrderPage } from "@/app/types/metrics";
 import { useToast } from "@/app/components/ui/use-toast";
 
 interface Metrics {
@@ -35,7 +36,7 @@ interface Metrics {
     date: string;
     count: number;
   }>;
-  orders: Order[];
+  orders: OrderPage;
   averageProcessingTime: number;
   ordersAtRisk: number;
   efficiencyByUser: Array<{
@@ -62,79 +63,78 @@ export default function MetricsPage() {
     null,
   );
   const { toast } = useToast();
-  const [shouldFetch, setShouldFetch] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        router.push("/login");
-      } else if (user.role?.name !== "ADMIN") {
-        router.push("/scan");
-      } else {
-        fetchMetrics();
-      }
+    if (isLoading) return;
+    if (!user) {
+      router.push("/login");
+    } else if (user.role?.name !== "ADMIN") {
+      router.push("/scan");
     }
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (shouldFetch) {
+    if (user && user.role?.name === "ADMIN") {
+      const fetchMetrics = async () => {
+        setIsLoadingMetrics(true);
+        try {
+          const queryParams = new URLSearchParams();
+
+          // Solo agregar los parámetros que tienen valor
+          if (filters.fecha_inicio)
+            queryParams.append("fecha_inicio", filters.fecha_inicio);
+          if (filters.fecha_fin)
+            queryParams.append("fecha_fin", filters.fecha_fin);
+          if (filters.responsable)
+            queryParams.append("responsable", filters.responsable);
+          if (filters.pedido_id)
+            queryParams.append("pedido_id", filters.pedido_id);
+          if (filters.estado) queryParams.append("estado", filters.estado);
+          if (filters.time_range)
+            queryParams.append("time_range", filters.time_range);
+
+          queryParams.append("page", (currentPage - 1).toString());
+          queryParams.append("size", "20");
+          console.log("Enviando filtros:", queryParams.toString());
+
+          const response = await fetch(
+            `https://incredible-charm-production.up.railway.app/metricas?${queryParams.toString()}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+              },
+            },
+          );
+          if (!response.ok) {
+            throw new Error("Error al cargar las métricas");
+          }
+
+          const data = await response.json();
+          setMetrics(data);
+        } catch (error) {
+          console.error("Error fetching metrics:", error);
+          toast({
+            title: "Error",
+            description: "No se pudieron cargar las métricas",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingMetrics(false);
+        }
+      };
+
       fetchMetrics();
-      setShouldFetch(false);
     }
-  }, [filters, shouldFetch]);
-
-  const fetchMetrics = async () => {
-    setIsLoadingMetrics(true);
-    try {
-      const queryParams = new URLSearchParams();
-
-      // Solo agregar los parámetros que tienen valor
-      if (filters.fecha_inicio)
-        queryParams.append("fecha_inicio", filters.fecha_inicio);
-      if (filters.fecha_fin) queryParams.append("fecha_fin", filters.fecha_fin);
-      if (filters.responsable)
-        queryParams.append("responsable", filters.responsable);
-      if (filters.pedido_id) queryParams.append("pedido_id", filters.pedido_id);
-      if (filters.estado) queryParams.append("estado", filters.estado);
-      if (filters.time_range)
-        queryParams.append("time_range", filters.time_range);
-
-      console.log("Enviando filtros:", queryParams.toString());
-
-      const response = await fetch(
-        `https://incredible-charm-production.up.railway.app/metricas?${queryParams.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        },
-      );
-      if (!response.ok) {
-        throw new Error("Error al cargar las métricas");
-      }
-
-      const data = await response.json();
-      setMetrics(data);
-    } catch (error) {
-      console.error("Error fetching metrics:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las métricas",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingMetrics(false);
-    }
-  };
+  }, [user, filters, currentPage, toast]);
 
   const handleFilterChange = (newFilters: typeof filters) => {
     console.log("Nuevos filtros recibidos:", newFilters);
     setFilters(newFilters);
-    setShouldFetch(true);
   };
 
   const handleApplyFilters = () => {
-    setShouldFetch(true);
+    // This function can be left empty for now as setFilters triggers the fetch
   };
 
   const handleResetFilters = () => {
@@ -147,7 +147,6 @@ export default function MetricsPage() {
       time_range: "day",
     };
     setFilters(resetFilters);
-    setShouldFetch(true);
   };
 
   const handleExport = async (format: "excel" | "csv") => {
@@ -303,7 +302,12 @@ export default function MetricsPage() {
 
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-medium mb-4">Listado de Pedidos</h2>
-              <MetricsTable orders={metrics.orders} />
+              <MetricsTable
+                orders={metrics.orders.content}
+                totalPages={metrics.orders.totalPages}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+              />
             </div>
           </>
         ) : (

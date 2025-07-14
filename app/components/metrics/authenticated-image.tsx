@@ -26,7 +26,10 @@ export function AuthenticatedImage({ imageUrl, token }: AuthenticatedImageProps)
       setError(null);
 
       try {
-        const fullUrl = `https://incredible-charm-production.up.railway.app${imageUrl}`;
+        const fullUrl = imageUrl.startsWith("http")
+          ? imageUrl
+          : `https://incredible-charm-production.up.railway.app${imageUrl}`;
+
         const response = await fetch(fullUrl, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -58,8 +61,15 @@ export function AuthenticatedImage({ imageUrl, token }: AuthenticatedImageProps)
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 space-y-4 p-4 border rounded-lg bg-muted/20">
         <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-sm text-muted-foreground">Cargando imagen...</p>
+        <div className="text-xs text-muted-foreground text-center break-all">
+          <p className="font-semibold">URL:</p>
+          <p>{imageUrl || 'No se proporcionó URL'}</p>
+          <p className="mt-2 font-semibold">Token:</p>
+          <p>{token ? 'Presente' : 'Ausente'}</p>
+        </div>
       </div>
     );
   }
