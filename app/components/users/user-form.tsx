@@ -35,6 +35,7 @@ export function UserForm({
     fullName: "",
     userName: "",
     role: "preparador",
+    duxID: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -47,6 +48,7 @@ export function UserForm({
         fullName: user.fullName || "",
         userName: user.userName || "",
         role: user.role || "preparador",
+        duxID: user.duxID || "",
       });
     }
   }, [user]);
@@ -88,6 +90,10 @@ export function UserForm({
 
     if (!formData.userName) {
       newErrors.userName = "El nombre de usuario es requerido";
+    }
+
+    if (!formData.duxID) {
+      newErrors.duxID = "El DUX ID es requerido";
     }
 
     setErrors(newErrors);
@@ -181,6 +187,20 @@ export function UserForm({
         {errors.userName && (
           <p className="text-sm text-red-500">{errors.userName}</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="duxID">DUX ID</Label>
+        <Input
+          id="duxID"
+          value={formData.duxID}
+          onChange={(e) => handleChange("duxID", e.target.value)}
+          className={`border-primary/20 focus-visible:ring-primary ${
+            errors.duxID ? "border-red-500" : ""
+          }`}
+          disabled={isLoading}
+        />
+        {errors.duxID && <p className="text-sm text-red-500">{errors.duxID}</p>}
       </div>
 
       <div className="space-y-2">

@@ -410,8 +410,12 @@ export default function ScanPage() {
                       {qrDataString && user?.role && (
                         <OrderStatusUpdate
                           qrData={qrDataString}
-                          onStatusChange={(updatedOrder) => setOrder(prevOrder => ({ ...prevOrder, ...updatedOrder }))}
-                          userRole={user.role as UserRole}
+                          onStatusChange={(updatedOrder) =>
+                            setOrder(prevOrder =>
+                              prevOrder ? { ...prevOrder, ...updatedOrder, products: prevOrder.products } : null
+                            )
+                          }
+                          userRole={user.role}
                         />
                       )}
 

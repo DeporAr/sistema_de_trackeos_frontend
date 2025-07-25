@@ -29,6 +29,7 @@ export interface User {
   fullName: string;
   userName: string;
   role: string;
+  duxID: string;
 }
 
 interface UsersTableProps {
