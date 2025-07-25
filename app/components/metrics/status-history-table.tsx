@@ -63,15 +63,25 @@ export function StatusHistoryTable({ history }: StatusHistoryTableProps) {
               <TableCell className="whitespace-nowrap text-center">
                 {record.endedAt ? (
                   formatDateTime(record.endedAt)
+                ) : record.status === "CANCELADO" ||
+                  record.status === "DESPACHADO" ? (
+                  formatDateTime(record.startedAt)
                 ) : (
                   <span className="text-muted-foreground">En curso</span>
                 )}
               </TableCell>
               <TableCell className="whitespace-nowrap text-center">
-                {calculateTimeInStatus(record.startedAt, record.endedAt)}
+                {calculateTimeInStatus(
+                  record.startedAt,
+                  (record.status === "CANCELADO" ||
+                    record.status === "DESPACHADO") &&
+                    !record.endedAt
+                    ? record.startedAt
+                    : record.endedAt,
+                )}
               </TableCell>
               <TableCell className="text-center">
-                {typeof record.changedBy === 'string'
+                {typeof record.changedBy === "string"
                   ? record.changedBy
                   : (record.changedBy as any)?.name || 'N/A'}
               </TableCell>

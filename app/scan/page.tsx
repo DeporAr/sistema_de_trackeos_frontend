@@ -218,7 +218,7 @@ export default function ScanPage() {
       formData.append("file", selectedImage);
 
       const response = await fetch(
-        `https://incredible-charm-production.up.railway.app/api/volume/upload?order_id=${scannedQrData}`,
+        `https://incredible-charm-production.up.railway.app/api/volume/upload?orderId=${order.id}`,
         {
           method: "POST",
           headers: {
@@ -255,7 +255,7 @@ export default function ScanPage() {
       setIsUploading(false);
       setSelectedImage(null);
     }
-  }, [selectedImage, order, handleJwtError, scannedQrData]);
+  }, [selectedImage, order, handleJwtError]);
 
   if (isLoading) {
     return (

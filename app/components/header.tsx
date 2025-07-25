@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/context/auth-context";
 import {
@@ -18,10 +18,29 @@ import { useRouter, usePathname } from "next/navigation";
 export function Header() {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
+  const toggleUserMenu = () => setUserMenuOpen(!userMenuOpen);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    if (userMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [userMenuOpen]);
 
   const getInitials = (name: string) => {
     if (!name) return "";
@@ -119,8 +138,11 @@ export function Header() {
           {/* User Menu (Desktop) */}
           {user && (
             <div className="hidden md:flex items-center">
-              <div className="relative group">
-                <button className="flex items-center space-x-2 focus:outline-none">
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={toggleUserMenu}
+                  className="flex items-center space-x-2 focus:outline-none"
+                >
                   <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
                     {userAvatar ? (
                       <img
@@ -139,21 +161,28 @@ export function Header() {
                   </span>
                 </button>
 
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
-                  <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                    <p className="font-medium">{userName}</p>
-                    <p className="text-gray-500 capitalize">
-                      {user.role?.name || ""}
-                    </p>
-                  </div>
-                  <button
-                    onClick={logout}
-                    className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                {userMenuOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10"
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar sesión
-                  </button>
-                </div>
+                    <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                      <p className="font-medium">{userName}</p>
+                      <p className="text-gray-500 capitalize">
+                        {user.role?.name || ""}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setUserMenuOpen(false);
+                      }}
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Cerrar sesión
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
