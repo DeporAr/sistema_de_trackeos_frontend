@@ -44,6 +44,7 @@ export function MetricsFilters({
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [status, setStatus] = useState<string>("ALL");
+  const [orderId, setOrderId] = useState<string>("");
 
   const handleApplyFilters = () => {
     // Asegurarse de que las fechas estén en el formato correcto YYYY-MM-DD
@@ -57,7 +58,7 @@ export function MetricsFilters({
       fecha_inicio: formattedStartDate,
       fecha_fin: formattedEndDate,
       responsable: "",
-      pedido_id: "",
+      pedido_id: orderId,
       estado: formattedStatus,
       time_range: timeRange,
     };
@@ -71,6 +72,7 @@ export function MetricsFilters({
     setStartDate(undefined);
     setEndDate(undefined);
     setStatus("ALL");
+    setOrderId("");
 
     const resetFilters = {
       fecha_inicio: "",
@@ -156,15 +158,22 @@ export function MetricsFilters({
               <SelectItem value="ALL">Todos</SelectItem>
               <SelectItem value="RECIBIDO">Recibido</SelectItem>
               <SelectItem value="EN_PREPARACION">En Preparación</SelectItem>
-              <SelectItem value="PREPARADO">Preparado</SelectItem>
-              <SelectItem value="EN_EMBALAJE">En Embalaje</SelectItem>
               <SelectItem value="EMBALADO">Embalado</SelectItem>
-              <SelectItem value="EN_DESPACHO">En Despacho</SelectItem>
               <SelectItem value="DESPACHADO">Despachado</SelectItem>
-              <SelectItem value="ENTREGADO">Entregado</SelectItem>
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* ID del Pedido */}
+      <div className="space-y-2">
+        <Label htmlFor="orderId">ID del Pedido</Label>
+        <Input
+          id="orderId"
+          value={orderId}
+          onChange={(e) => setOrderId(e.target.value)}
+          placeholder="Buscar por ID"
+        />
       </div>
 
       <div className="flex justify-end space-x-2 pt-2">

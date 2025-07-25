@@ -76,59 +76,115 @@ export default function MetricsPage() {
 
   useEffect(() => {
     if (user && user.role?.name === "ADMIN") {
-  const fetchMetrics = async () => {
-    setIsLoadingMetrics(true);
-    try {
-      const queryParams = new URLSearchParams();
+      const fetchMetricsOrOrder = async () => {
+        setIsLoadingMetrics(true);
+        setMetrics(null); // Limpiar métricas anteriores
 
-      // Solo agregar los parámetros que tienen valor
-      if (filters.fecha_inicio)
-        queryParams.append("fecha_inicio", filters.fecha_inicio);
-          if (filters.fecha_fin)
-            queryParams.append("fecha_fin", filters.fecha_fin);
-      if (filters.responsable)
-        queryParams.append("responsable", filters.responsable);
-          if (filters.pedido_id)
-            queryParams.append("pedido_id", filters.pedido_id);
-      if (filters.estado) queryParams.append("estado", filters.estado);
-      if (filters.time_range)
-        queryParams.append("time_range", filters.time_range);
+        try {
+          if (filters.pedido_id) {
+            // Lógica para buscar un solo pedido
+            const response = await fetch(
+              `https://incredible-charm-production.up.railway.app/orders/manual/${filters.pedido_id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                },
+              },
+            );
 
-      queryParams.append("page", (currentPage - 1).toString());
-      queryParams.append("size", "20");
-      console.log("Enviando filtros:", queryParams.toString());
+            if (!response.ok) {
+              if (response.status === 404) {
+                toast({
+                  title: "Pedido no encontrado",
+                  description: "No se encontró un pedido con el ID proporcionado.",
+                  variant: "destructive",
+                });
+              } else {
+                throw new Error("Error al buscar el pedido");
+              }
+              return;
+            }
 
-      const response = await fetch(
-        `https://incredible-charm-production.up.railway.app/metricas?${queryParams.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        },
-      );
-      if (!response.ok) {
-        throw new Error("Error al cargar las métricas");
-      }
+            const orderData = await response.json();
 
-      const data = await response.json();
-      setMetrics(data);
-    } catch (error) {
-      console.error("Error fetching metrics:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las métricas",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingMetrics(false);
-    }
-  };
+            // Adaptar el pedido único a la estructura de Metrics
+            const singleOrderMetrics: Metrics = {
+              data: [],
+              totalOrders: 1,
+              completedOrders: orderData.status === 'ENTREGADO' ? 1 : 0,
+              pendingOrders: orderData.status !== 'ENTREGADO' ? 1 : 0,
+              ordersByStatus: [{ status: orderData.status, count: 1 }],
+              ordersByUser: [],
+              ordersByDate: [],
+              orders: {
+                content: [orderData],
+                totalPages: 1,
+                totalElements: 1,
+                size: 1,
+                number: 0,
+                first: true,
+                last: true,
+                numberOfElements: 1,
+                empty: false,
+                sort: { empty: true, sorted: false, unsorted: true },
+                pageable: {
+                  offset: 0,
+                  pageNumber: 0,
+                  pageSize: 1,
+                  paged: true,
+                  unpaged: false,
+                  sort: { empty: true, sorted: false, unsorted: true },
+                },
+              },
+              averageProcessingTime: 0,
+              ordersAtRisk: 0,
+              efficiencyByUser: [],
+            };
+            setMetrics(singleOrderMetrics);
 
-      fetchMetrics();
+          } else {
+            // Lógica original para cargar todas las métricas
+            const queryParams = new URLSearchParams();
+            if (filters.fecha_inicio) queryParams.append("fecha_inicio", filters.fecha_inicio);
+            if (filters.fecha_fin) queryParams.append("fecha_fin", filters.fecha_fin);
+            if (filters.responsable) queryParams.append("responsable", filters.responsable);
+            if (filters.estado) queryParams.append("estado", filters.estado);
+            if (filters.time_range) queryParams.append("time_range", filters.time_range);
+            queryParams.append("page", (currentPage - 1).toString());
+            queryParams.append("size", "20");
+
+            const response = await fetch(
+              `https://incredible-charm-production.up.railway.app/metricas?${queryParams.toString()}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                },
+              },
+            );
+            if (!response.ok) {
+              throw new Error("Error al cargar las métricas");
+            }
+            const data = await response.json();
+            setMetrics(data);
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          toast({
+            title: "Error",
+            description: "No se pudieron cargar los datos.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingMetrics(false);
+        }
+      };
+
+      fetchMetricsOrOrder();
     }
   }, [user, filters, currentPage, toast]);
 
   const handleFilterChange = (newFilters: typeof filters) => {
+    setCurrentPage(1); // Resetear a la primera página con cada nuevo filtro
     console.log("Nuevos filtros recibidos:", newFilters);
     setFilters(newFilters);
   };
@@ -257,51 +313,57 @@ export default function MetricsPage() {
           </div>
         ) : metrics ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-medium mb-2">Total de Pedidos</h3>
-                <p className="text-3xl font-bold text-primary">
-                  {metrics.totalOrders}
-                </p>
-              </div>
+            {!filters.pedido_id && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-medium mb-2">Total de Pedidos</h3>
+                    <p className="text-3xl font-bold text-primary">
+                      {metrics.totalOrders}
+                    </p>
+                  </div>
 
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-medium mb-2">
-                  Pedidos Completados
-                </h3>
-                <p className="text-3xl font-bold text-green-600">
-                  {metrics.completedOrders}
-                </p>
-              </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-medium mb-2">
+                      Pedidos Completados
+                    </h3>
+                    <p className="text-3xl font-bold text-green-600">
+                      {metrics.completedOrders}
+                    </p>
+                  </div>
 
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-medium mb-2">Tiempo Promedio</h3>
-                <p className="text-3xl font-bold text-blue-600">
-                  {metrics.averageProcessingTime.toFixed(1)}h
-                </p>
-              </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-medium mb-2">Tiempo Promedio</h3>
+                    <p className="text-3xl font-bold text-blue-600">
+                      {metrics.averageProcessingTime.toFixed(1)}h
+                    </p>
+                  </div>
 
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-medium mb-2">Pedidos en Riesgo</h3>
-                <p className="text-3xl font-bold text-red-600">
-                  {metrics.ordersAtRisk}
-                </p>
-              </div>
-            </div>
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-medium mb-2">Pedidos en Riesgo</h3>
+                    <p className="text-3xl font-bold text-red-600">
+                      {metrics.ordersAtRisk}
+                    </p>
+                  </div>
+                </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <MetricsCharts
-                data={{
-                  ordersByDate: metrics.ordersByDate,
-                  ordersByUser: metrics.ordersByUser,
-                  ordersByStatus: metrics.ordersByStatus,
-                }}
-                timeRange={filters.time_range}
-              />
-            </div>
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <MetricsCharts
+                    data={{
+                      ordersByDate: metrics.ordersByDate,
+                      ordersByUser: metrics.ordersByUser,
+                      ordersByStatus: metrics.ordersByStatus,
+                    }}
+                    timeRange={filters.time_range}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-medium mb-4">Listado de Pedidos</h2>
+              <h2 className="text-xl font-medium mb-4">
+                {filters.pedido_id ? `Resultado para el Pedido #${filters.pedido_id}` : 'Listado de Pedidos'}
+              </h2>
               <MetricsTable
                 orders={metrics.orders.content}
                 totalPages={metrics.orders.totalPages}

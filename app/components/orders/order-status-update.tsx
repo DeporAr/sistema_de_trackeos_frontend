@@ -17,12 +17,8 @@ import { useRouter } from "next/navigation";
 export type OrderStatus =
   | "RECIBIDO"
   | "EN_PREPARACION"
-  | "PREPARADO"
-  | "EN_EMBALAJE"
   | "EMBALADO"
-  | "EN_DESPACHO"
-  | "DESPACHADO"
-  | "ENTREGADO";
+  | "DESPACHADO";
 
 // Define user role type
 export type UserRole =
@@ -42,10 +38,10 @@ interface Role {
 
 // Modificar el mapeo de roles a estados permitidos
 const roleStatusMap: Record<UserRole, OrderStatus[]> = {
-  admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "ENTREGADO"],
-  preparador: ["EN_PREPARACION", "EMBALADO"],
-  embalador: ["EN_EMBALAJE", "EMBALADO"],
-  despachador: ["EN_DESPACHO", "DESPACHADO", "ENTREGADO"],
+  admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO"],
+  preparador: ["EN_PREPARACION"],
+  embalador: ["EMBALADO"],
+  despachador: ["DESPACHADO"],
   recibidor: ["RECIBIDO"],
 };
 
@@ -53,12 +49,8 @@ const roleStatusMap: Record<UserRole, OrderStatus[]> = {
 const statusLabels: Record<OrderStatus, string> = {
   RECIBIDO: "Recibido",
   EN_PREPARACION: "En Preparación",
-  PREPARADO: "Preparado",
-  EN_EMBALAJE: "En Embalaje",
   EMBALADO: "Embalado",
-  EN_DESPACHO: "En Despacho",
   DESPACHADO: "Despachado",
-  ENTREGADO: "Entregado",
 };
 
 interface Order {

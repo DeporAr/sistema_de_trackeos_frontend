@@ -71,7 +71,9 @@ export function StatusHistoryTable({ history }: StatusHistoryTableProps) {
                 {calculateTimeInStatus(record.startedAt, record.endedAt)}
               </TableCell>
               <TableCell className="text-center">
-                {record.changedBy.name}
+                {typeof record.changedBy === 'string'
+                  ? record.changedBy
+                  : (record.changedBy as any)?.name || 'N/A'}
               </TableCell>
             </TableRow>
           ))}
