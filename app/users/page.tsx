@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth-context";
 import { Role } from "@/app/types/user";
+import { useApi } from "@/app/hooks/useApi";
 import {
   AlertCircle,
   Edit,
@@ -53,6 +54,7 @@ export default function UsersPage() {
   // Estados para mensajes
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const apiFetch = useApi();
 
   // Efecto para marcar el componente como montado
   useEffect(() => {
@@ -76,7 +78,7 @@ export default function UsersPage() {
   const loadUsers = async () => {
     setLoadingUsers(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         "https://incredible-charm-production.up.railway.app/users/",
         {
           headers: {
@@ -216,7 +218,7 @@ export default function UsersPage() {
     try {
       if (editingUser) {
         // Actualizar usuario existente
-        const response = await fetch(
+        const response = await apiFetch(
           `https://incredible-charm-production.up.railway.app/users/${editingUser.id}`,
           {
             method: "PUT",
@@ -256,7 +258,7 @@ export default function UsersPage() {
 
         console.log("Enviando datos:", userData); // Para debugging
 
-        const response = await fetch(
+        const response = await apiFetch(
           "https://incredible-charm-production.up.railway.app/auth/signup",
           {
             method: "POST",
@@ -299,7 +301,7 @@ export default function UsersPage() {
     if (!userToDelete) return;
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `https://incredible-charm-production.up.railway.app/users/${userToDelete}`,
         {
           method: "DELETE",

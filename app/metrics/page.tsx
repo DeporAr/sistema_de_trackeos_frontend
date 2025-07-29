@@ -11,6 +11,7 @@ import { RefreshCw } from "lucide-react";
 import { getStatusLabel } from "@/app/types/order";
 import { OrderPage } from "@/app/types/metrics";
 import { useToast } from "@/app/components/ui/use-toast";
+import { useApi } from "@/app/hooks/useApi";
 
 interface Metrics {
   data: Array<{
@@ -64,6 +65,7 @@ export default function MetricsPage() {
   );
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
+  const apiFetch = useApi();
 
   useEffect(() => {
     if (isLoading) return;
@@ -83,7 +85,7 @@ export default function MetricsPage() {
         try {
           if (filters.pedido_id) {
             // Lógica para buscar un solo pedido
-            const response = await fetch(
+            const response = await apiFetch(
               `https://incredible-charm-production.up.railway.app/orders/manual/${filters.pedido_id}`,
               {
                 headers: {
@@ -152,7 +154,7 @@ export default function MetricsPage() {
             params.append("page", (currentPage - 1).toString());
             params.append("size", "20");
 
-            const response = await fetch(
+            const response = await apiFetch(
               `https://incredible-charm-production.up.railway.app/metricas?${params.toString()}`,
               {
                 headers: {
