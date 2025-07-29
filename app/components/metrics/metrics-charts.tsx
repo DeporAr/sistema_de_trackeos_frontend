@@ -51,7 +51,9 @@ interface MetricsChartsProps {
 
 export function MetricsCharts({ data, timeRange }: MetricsChartsProps) {
   const formatDate = (date: string) => {
-    const d = new Date(date);
+    // The date string from the API (e.g., "2025-07-28") is treated as UTC midnight by new Date().
+    // Appending 'T00:00:00' makes it be treated as local time midnight, avoiding timezone shifts.
+    const d = new Date(`${date}T00:00:00`);
     return format(d, "dd/MM/yyyy", { locale: es });
   };
 

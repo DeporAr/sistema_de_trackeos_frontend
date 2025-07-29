@@ -90,26 +90,21 @@ export function OrderDetails({
   };
 
   const getAvailableStatuses = () => {
-    switch (userRole) {
-      case "preparador":
-        return [
-          { value: "pendiente", label: "Pendiente" },
-          { value: "en_preparacion", label: "En Preparación" },
-          { value: "preparado", label: "Preparado" },
-        ];
-      case "embalador":
-        return [
-          { value: "preparado", label: "Preparado" },
-          { value: "en_embalaje", label: "En Embalaje" },
-          { value: "embalado", label: "Embalado" },
-        ];
-      case "despachador":
-        return [
-          { value: "embalado", label: "Embalado" },
-          { value: "en_despacho", label: "En Despacho" },
-          { value: "despachado", label: "Despachado" },
-          { value: "entregado", label: "Entregado" },
-        ];
+    const allStatuses = [
+      { value: "pendiente", label: "Pendiente" },
+      { value: "en_preparacion", label: "En Preparación" },
+      { value: "preparado", label: "Preparado" },
+      { value: "en_embalaje", label: "En Embalaje" },
+      { value: "embalado", label: "Embalado" },
+      { value: "en_despacho", label: "En Despacho" },
+      { value: "despachado", label: "Despachado" },
+      { value: "entregado", label: "Entregado" },
+    ];
+
+    switch (userRole.toLowerCase()) {
+      case "admin":
+      case "operador":
+        return allStatuses;
       default:
         return [];
     }
@@ -196,7 +191,7 @@ export function OrderDetails({
         </div>
       </div>
 
-      {userRole !== "admin" && (
+      {getAvailableStatuses().length > 0 && (
         <div className="border-t border-gray-200 pt-6">
           <h3 className="text-lg font-medium mb-3">Actualizar Estado</h3>
 

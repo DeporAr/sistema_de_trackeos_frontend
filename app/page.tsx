@@ -15,7 +15,7 @@ export default function Home() {
         router.push("/login");
       } else {
         // Redirigir según el rol del usuario
-        if (user.role?.name === "ADMIN") {
+        if (user.role?.name === "ADMIN" || user.role?.name === "SUPER_ADMIN") {
           router.push("/metrics");
         } else {
           // Todos los demás roles van a la página de escaneo

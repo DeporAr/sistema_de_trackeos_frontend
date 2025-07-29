@@ -5,6 +5,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth-context";
+import { Role } from "@/app/types/user";
 import {
   AlertCircle,
   Edit,
@@ -17,16 +18,16 @@ import {
 
 // Tipo para usuarios
 interface User {
-  id: string;
+  id: number;
   name: string;
   username: string;
   email: string;
-  role: string;
+  role: Role;
   duxId?: string;
 }
 
 export default function UsersPage() {
-  const { user, isLoading } = useAuth();
+  const { user: loggedInUser, isLoading } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
@@ -40,7 +41,7 @@ export default function UsersPage() {
     password: "",
     fullName: "",
     userName: "",
-    role: "preparador",
+    role: "OPERADOR",
     duxId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -61,15 +62,15 @@ export default function UsersPage() {
   // Efecto para verificar autenticación y cargar usuarios
   useEffect(() => {
     if (mounted && !isLoading) {
-      if (!user) {
+      if (!loggedInUser) {
         router.push("/login");
-      } else if (user.role?.name !== "ADMIN") {
+      } else if (loggedInUser.role?.name !== "ADMIN" && loggedInUser.role?.name !== "SUPER_ADMIN") {
         router.push("/");
       } else {
         loadUsers();
       }
     }
-  }, [mounted, user, isLoading, router]);
+  }, [mounted, loggedInUser, isLoading, router]);
 
   // Función para cargar usuarios
   const loadUsers = async () => {
@@ -95,7 +96,7 @@ export default function UsersPage() {
         name: user.name,
         username: user.username,
         email: user.email,
-        role: user.role,
+        role: { name: user.role }, // Asumimos que la API devuelve el nombre del rol como un string
         duxId: user.duxId,
       }));
       setUsers(transformedData);
@@ -168,7 +169,7 @@ export default function UsersPage() {
       password: "",
       fullName: "",
       userName: "",
-      role: "preparador",
+      role: "OPERADOR",
       duxId: "",
     });
     setFormErrors({});
@@ -183,7 +184,7 @@ export default function UsersPage() {
       password: "", // No mostrar la contraseña actual
       fullName: user.name,
       userName: user.username,
-      role: user.role,
+      role: user.role.name,
       duxId: user.duxId || "",
     });
     setFormErrors({});
@@ -335,7 +336,7 @@ export default function UsersPage() {
     );
   }
 
-  if (!user || user.role?.name !== "ADMIN") {
+  if (!loggedInUser || (loggedInUser.role?.name !== "ADMIN" && loggedInUser.role?.name !== "SUPER_ADMIN")) {
     return null; // La redirección se maneja en el useEffect
   }
 
@@ -422,24 +423,30 @@ export default function UsersPage() {
                         {user.username}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap capitalize">
-                        {user.role}
+                        {user.role.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {user.duxId || "N/A"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button
-                          onClick={() => handleEditUser(user)}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
+                        {loggedInUser?.role?.name === "SUPER_ADMIN" && loggedInUser.id !== user.id && (
+                          <>
+                            <button
+                              onClick={() => handleEditUser(user)}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            {user.id !== loggedInUser?.id && (
+                              <button
+                                onClick={() => handleDeleteUser(user.id.toString())}
+                                className="text-red-600 hover:text-red-500"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            )}
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -585,10 +592,9 @@ export default function UsersPage() {
                       onChange={(e) => handleFormChange("role", e.target.value)}
                       className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     >
-                      <option value="PREPARADOR">Preparador</option>
-                      <option value="EMBALADOR">Embalador</option>
-                      <option value="DESPACHADOR">Despachador</option>
-                      <option value="RECIBIDOR">Recibidor</option>
+                      <option value="OPERADOR">Operador</option>
+                      <option value="ADMIN">Admin</option>
+                      <option value="SUPER_ADMIN">Super Admin</option>
                     </select>
                   </div>
 

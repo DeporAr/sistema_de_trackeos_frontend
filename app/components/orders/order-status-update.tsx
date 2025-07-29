@@ -22,12 +22,7 @@ export type OrderStatus =
   | "CANCELADO";
 
 // Define user role type
-export type UserRole =
-  | "admin"
-  | "preparador"
-  | "embalador"
-  | "despachador"
-  | "recibidor";
+export type UserRole = "super_admin" | "admin" | "operador";
 
 // Interfaz para el rol del usuario
 interface Role {
@@ -40,11 +35,9 @@ interface Role {
 
 // Modificar el mapeo de roles a estados permitidos
 const roleStatusMap: Record<UserRole, OrderStatus[]> = {
+  super_admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO"],
   admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO"],
-  preparador: ["EN_PREPARACION", "CANCELADO"],
-  embalador: ["EMBALADO", "CANCELADO"],
-  despachador: ["DESPACHADO", "CANCELADO"],
-  recibidor: ["RECIBIDO", "CANCELADO"],
+  operador: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO"],
 };
 
 // Status labels for display

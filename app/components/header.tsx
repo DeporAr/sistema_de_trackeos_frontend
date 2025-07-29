@@ -58,6 +58,7 @@ export function Header() {
 
   // Verificar si el usuario es admin basado en el rol
   const isAdmin =
+    user?.role?.name === "SUPER_ADMIN" ||
     user?.role?.name === "ADMIN" ||
     user?.authorities?.some((auth) => auth.authority === "ROLE_ADMIN");
 

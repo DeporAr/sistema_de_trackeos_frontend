@@ -69,13 +69,13 @@ export default function MetricsPage() {
     if (isLoading) return;
     if (!user) {
       router.push("/login");
-    } else if (user.role?.name !== "ADMIN") {
+    } else if (user?.role?.name !== "ADMIN" && user?.role?.name !== "SUPER_ADMIN") {
       router.push("/scan");
     }
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (user && user.role?.name === "ADMIN") {
+    if (user && (user.role?.name === "ADMIN" || user.role?.name === "SUPER_ADMIN")) {
       const fetchMetricsOrOrder = async () => {
         setIsLoadingMetrics(true);
         setMetrics(null); // Limpiar métricas anteriores
@@ -136,42 +136,43 @@ export default function MetricsPage() {
                   sort: { empty: true, sorted: false, unsorted: true },
                 },
               },
-              averageProcessingTime: 0,
-              ordersAtRisk: 0,
+              averageProcessingTime: 0, // No se calcula para un solo pedido
+              ordersAtRisk: 0, // No se calcula para un solo pedido
               efficiencyByUser: [],
             };
             setMetrics(singleOrderMetrics);
 
           } else {
-            // Lógica original para cargar todas las métricas
-            const queryParams = new URLSearchParams();
-            if (filters.fecha_inicio) queryParams.append("fecha_inicio", filters.fecha_inicio);
-            if (filters.fecha_fin) queryParams.append("fecha_fin", filters.fecha_fin);
-            if (filters.responsable) queryParams.append("responsable", filters.responsable);
-            if (filters.estado) queryParams.append("estado", filters.estado);
-            if (filters.time_range) queryParams.append("time_range", filters.time_range);
-            queryParams.append("page", (currentPage - 1).toString());
-            queryParams.append("size", "20");
+            // Lógica para buscar métricas generales
+            const params = new URLSearchParams();
+            if (filters.fecha_inicio) params.append("start_date", filters.fecha_inicio);
+            if (filters.fecha_fin) params.append("end_date", filters.fecha_fin);
+            if (filters.responsable) params.append("user_id", filters.responsable);
+            if (filters.estado) params.append("status", filters.estado);
+            params.append("page", (currentPage - 1).toString());
+            params.append("size", "20");
 
             const response = await fetch(
-              `https://incredible-charm-production.up.railway.app/metricas?${queryParams.toString()}`,
+              `https://incredible-charm-production.up.railway.app/metricas?${params.toString()}`,
               {
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
               },
             );
+
             if (!response.ok) {
               throw new Error("Error al cargar las métricas");
             }
+
             const data = await response.json();
             setMetrics(data);
           }
         } catch (error) {
-          console.error("Error fetching data:", error);
+          console.error(error);
           toast({
             title: "Error",
-            description: "No se pudieron cargar los datos.",
+            description: "No se pudieron cargar las métricas. Inténtalo de nuevo.",
             variant: "destructive",
           });
         } finally {
@@ -257,7 +258,7 @@ export default function MetricsPage() {
     );
   }
 
-  if (!user || user.role?.name !== "ADMIN") {
+  if (!user || (user?.role?.name !== "ADMIN" && user?.role?.name !== "SUPER_ADMIN")) {
     return null; // La redirección se maneja en el useEffect
   }
 
@@ -335,7 +336,7 @@ export default function MetricsPage() {
                   <div className="bg-white rounded-lg shadow-md p-6">
                     <h3 className="text-lg font-medium mb-2">Tiempo Promedio</h3>
                     <p className="text-3xl font-bold text-blue-600">
-                      {metrics.averageProcessingTime.toFixed(1)}h
+                      {(metrics.averageProcessingTime / 3600).toFixed(1)}h
                     </p>
                   </div>
 
