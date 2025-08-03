@@ -19,7 +19,8 @@ export type OrderStatus =
   | "EN_PREPARACION"
   | "EMBALADO"
   | "DESPACHADO"
-  | "CANCELADO";
+  | "CANCELADO"
+  | "EN_FALTANTE";
 
 // Define user role type
 export type UserRole = "super_admin" | "admin" | "operador";
@@ -35,9 +36,9 @@ interface Role {
 
 // Modificar el mapeo de roles a estados permitidos
 const roleStatusMap: Record<UserRole, OrderStatus[]> = {
-  super_admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO"],
-  admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO"],
-  operador: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO"],
+  super_admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
+  admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
+  operador: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
 };
 
 // Status labels for display
@@ -47,6 +48,7 @@ const statusLabels: Record<OrderStatus, string> = {
   EMBALADO: "Embalado",
   DESPACHADO: "Despachado",
   CANCELADO: "Cancelado",
+  EN_FALTANTE: "En Faltante",
 };
 
 interface Order {
@@ -57,12 +59,14 @@ interface OrderStatusUpdateProps {
   qrData: string;
   onStatusChange: (updatedOrder: Order) => void;
   userRole: Role;
+  onUpdateComplete?: () => void;
 }
 
 export default function OrderStatusUpdate({
   qrData,
   onStatusChange,
   userRole,
+  onUpdateComplete,
 }: OrderStatusUpdateProps) {
   const router = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(
@@ -128,6 +132,11 @@ export default function OrderStatusUpdate({
       const updatedOrder = await response.json();
       onStatusChange(updatedOrder); // Notificar al padre sobre el cambio
       setIsSuccess(true);
+      if (onUpdateComplete) {
+        setTimeout(() => {
+          onUpdateComplete();
+        }, 1500); // Espera 1.5s para que el usuario vea el mensaje de éxito
+      }
     } catch (error) {
       console.error("Error updating status:", error);
       setErrorMessage(

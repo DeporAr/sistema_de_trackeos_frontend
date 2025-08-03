@@ -262,12 +262,10 @@ export default function AdminDashboard() {
                   <SelectItem value="">Todos los estados</SelectItem>
                   <SelectItem value="RECIBIDO">Recibido</SelectItem>
                   <SelectItem value="EN_PREPARACION">En Preparación</SelectItem>
-                  <SelectItem value="PREPARADO">Preparado</SelectItem>
-                  <SelectItem value="EN_EMBALAJE">En Embalaje</SelectItem>
                   <SelectItem value="EMBALADO">Embalado</SelectItem>
-                  <SelectItem value="EN_DESPACHO">En Despacho</SelectItem>
                   <SelectItem value="DESPACHADO">Despachado</SelectItem>
                   <SelectItem value="ENTREGADO">Entregado</SelectItem>
+                  <SelectItem value="EN_FALTANTE">En Faltante</SelectItem>
                 </SelectContent>
               </Select>
             </div>

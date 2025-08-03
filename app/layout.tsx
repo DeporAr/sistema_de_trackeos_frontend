@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/app/context/auth-context";
 import { Header } from "@/app/components/header";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "DeporAr QR Scanner",
@@ -21,6 +22,7 @@ export default function RootLayout({
         <AuthProvider>
           <Header />
           {children}
+          <SpeedInsights />
         </AuthProvider>
       </body>
     </html>

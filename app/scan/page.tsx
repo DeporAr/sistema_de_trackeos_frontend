@@ -416,6 +416,7 @@ export default function ScanPage() {
                             )
                           }
                           userRole={user.role}
+                          onUpdateComplete={handleReset}
                         />
                       )}
 
@@ -426,6 +427,7 @@ export default function ScanPage() {
                             id="package-image"
                             type="file"
                             accept="image/*"
+                            capture="environment"
                             onChange={handleImageChange}
                             ref={fileInputRef}
                             className="flex-1"
