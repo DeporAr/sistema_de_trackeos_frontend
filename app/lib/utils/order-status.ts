@@ -3,7 +3,8 @@ export type OrderStatus =
   | "EN_PREPARACION"
   | "EMBALADO"
   | "DESPACHADO"
-  | "CANCELADO";
+  | "CANCELADO"
+  | "EN_FALTANTE";
 
 export const statusLabels: Record<OrderStatus, string> = {
   RECIBIDO: "Recibido",
@@ -11,6 +12,7 @@ export const statusLabels: Record<OrderStatus, string> = {
   EMBALADO: "Embalado",
   DESPACHADO: "Despachado",
   CANCELADO: "Cancelado",
+  EN_FALTANTE: "En Faltante",
 };
 
 export function getStatusLabel(status: string): string {

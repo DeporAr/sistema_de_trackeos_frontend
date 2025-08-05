@@ -11,36 +11,11 @@ import { buttonVariants } from "@/app/components/ui/button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-// Días de la semana en español (orden correcto para mostrar)
-const spanishDays = ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
-
-// Creamos componente personalizado para reemplazar completamente el encabezado
-const CustomHead = () => {
-  return (
-    <thead>
-      <tr className="flex">
-        {spanishDays.map((day, i) => (
-          <th key={i} className="text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]">
-            {day}
-          </th>
-        ))}
-      </tr>
-    </thead>
-  );
-};
-
-// Componentes personalizados para reemplazar partes del calendario
-const components = {
-  IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-  IconRight: () => <ChevronRight className="h-4 w-4" />,
-  Head: CustomHead, // Reemplazamos completamente el encabezado
-};
-
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
-  locale = es,
+  locale = es, // Asegúrate de que el locale `es` esté importado
   ...props
 }: CalendarProps) {
   return (
@@ -81,9 +56,15 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      components={components}
+      components={{
+        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+        IconRight: () => <ChevronRight className="h-4 w-4" />,
+      }}
       locale={locale}
       weekStartsOn={1}
+      formatters={{
+        formatWeekdayName: (day) => format(day, "EE", { locale: es }),
+      }}
       {...props}
     />
   );
