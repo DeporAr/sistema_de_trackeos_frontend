@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { es } from "date-fns/locale";
 
 import { cn } from "@/app/lib/utils";
 import { buttonVariants } from "@/app/components/ui/button";
@@ -13,6 +14,7 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  locale = es,
   ...props
 }: CalendarProps) {
   return (
@@ -57,6 +59,7 @@ function Calendar({
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
       }}
+      locale={locale}
       {...props}
     />
   );
