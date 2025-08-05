@@ -124,7 +124,6 @@ export function MetricsFilters({
                 selected={startDate}
                 onSelect={setStartDate}
                 initialFocus
-                locale={es}
               />
             </PopoverContent>
           </Popover>
@@ -152,7 +151,6 @@ export function MetricsFilters({
                 selected={endDate}
                 onSelect={setEndDate}
                 initialFocus
-                locale={es}
               />
             </PopoverContent>
           </Popover>
