@@ -5,11 +5,28 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker, type DayPickerProps } from "react-day-picker";
 import { es } from "date-fns/locale";
 import { format } from "date-fns";
-
 import { cn } from "@/app/lib/utils";
 import { buttonVariants } from "@/app/components/ui/button";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+export type CalendarProps = DayPickerProps;
+
+const spanishWeekdays = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"];
+
+const CustomHead = () => (
+  <thead>
+    <tr className="grid grid-cols-7">
+      {spanishWeekdays.map((day) => (
+        <th
+          key={day}
+          scope="col"
+          className="text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]"
+        >
+          {day}
+        </th>
+      ))}
+    </tr>
+  </thead>
+);
 
 function Calendar({
   className,
@@ -35,7 +52,7 @@ function Calendar({
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
-        head_row: "grid grid-cols-7",
+        head_row: "hidden", // Ocultamos la fila de encabezado original
         head_cell:
           "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
         row: "flex w-full mt-2",
@@ -59,12 +76,12 @@ function Calendar({
       components={{
         IconLeft: () => <ChevronLeft className="h-4 w-4" />,
         IconRight: () => <ChevronRight className="h-4 w-4" />,
+        Head: CustomHead,
       }}
       locale={locale}
       weekStartsOn={1}
       formatters={{
         formatCaption: (date) => format(date, "LLLL yyyy", { locale: es }),
-        formatWeekdayName: (day) => format(day, "EEEEE", { locale: es }),
       }}
       {...props}
     />
