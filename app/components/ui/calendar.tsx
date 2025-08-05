@@ -12,9 +12,16 @@ export type CalendarProps = DayPickerProps;
 
 const spanishWeekdays = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"];
 
+// Usamos estilos en línea para evitar problemas con la purga de CSS de Tailwind en Vercel.
+const rowStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(7, 1fr)",
+  width: "100%",
+};
+
 const CustomHead = () => (
   <thead>
-    <tr className="grid grid-cols-7">
+    <tr style={rowStyle}>
       {spanishWeekdays.map((day) => (
         <th
           key={day}
