@@ -170,6 +170,7 @@ export function MetricsFilters({
               <SelectItem value="EMBALADO">Embalado</SelectItem>
               <SelectItem value="DESPACHADO">Despachado</SelectItem>
               <SelectItem value="CANCELADO">Cancelado</SelectItem>
+              <SelectItem value="EN_FALTANTE">En Faltante</SelectItem>
             </SelectContent>
           </Select>
         </div>

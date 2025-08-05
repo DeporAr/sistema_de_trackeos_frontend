@@ -17,6 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
+import { Calendar } from "@/app/components/ui/calendar";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
   Tabs,
@@ -49,6 +58,15 @@ interface MetricsFilters {
   estado: string;
 }
 
+// Tipos para el estado local con objetos Date
+interface DashboardState {
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+  responsable: string;
+  pedidoId: string;
+  estado: string;
+}
+
 // Tipos para las métricas
 interface MetricsData {
   byStatus: Array<{ name: string; value: number }>;
@@ -67,12 +85,24 @@ interface User {
 export default function AdminDashboard() {
   const { user } = useAuth();
   // Importar utilidad para fechas en Argentina
-  // (al inicio del archivo)
-  // import { getArgentinaDayRange } from "@/app/utils/dateAr";
-  const { startDate, endDate } = getArgentinaDayRange();
+  const { startDate: startDateStr, endDate: endDateStr } = getArgentinaDayRange();
+
+  // Convertir las fechas string a objetos Date
+  const today = new Date();
+
+  // Estado para los campos del calendario
+  const [dateState, setDateState] = useState<DashboardState>({
+    startDate: new Date(startDateStr + "T00:00:00-03:00"),
+    endDate: new Date(endDateStr + "T23:59:59-03:00"),
+    responsable: "",
+    pedidoId: "",
+    estado: "",
+  });
+
+  // Estado para los filtros que se envían a la API
   const [filters, setFilters] = useState<MetricsFilters>({
-    startDate,
-    endDate,
+    startDate: startDateStr,
+    endDate: endDateStr,
     responsable: "",
     pedidoId: "",
     estado: "",
@@ -112,8 +142,35 @@ export default function AdminDashboard() {
     fetchUsers();
   }, []);
 
-  // Función para actualizar los filtros
-  const handleFilterChange = (key: keyof MetricsFilters, value: string) => {
+  // Función para actualizar los filtros de fecha (objetos Date)
+  const handleDateChange = (key: 'startDate' | 'endDate', value: Date | undefined) => {
+    setDateState((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+
+    // Actualizar también los filtros de string para la API
+    if (value) {
+      const formattedDate = format(value, 'yyyy-MM-dd');
+      setFilters((prev) => ({
+        ...prev,
+        [key]: formattedDate,
+      }));
+    } else {
+      setFilters((prev) => ({
+        ...prev,
+        [key]: '',
+      }));
+    }
+  };
+
+  // Función para actualizar los demás filtros (string)
+  const handleFilterChange = (key: keyof Omit<MetricsFilters, 'startDate' | 'endDate'>, value: string) => {
+    setDateState((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+
     setFilters((prev) => ({
       ...prev,
       [key]: value,
@@ -202,24 +259,54 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">Fecha Inicio</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={filters.startDate}
-                onChange={(e) =>
-                  handleFilterChange("startDate", e.target.value)
-                }
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    id="startDate"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateState.startDate
+                      ? format(dateState.startDate, "PPP", { locale: es })
+                      : "Seleccionar fecha"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-gray-50">
+                  <Calendar
+                    mode="single"
+                    selected={dateState.startDate}
+                    onSelect={(date) => handleDateChange("startDate", date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="endDate">Fecha Fin</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange("endDate", e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    id="endDate"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateState.endDate
+                      ? format(dateState.endDate, "PPP", { locale: es })
+                      : "Seleccionar fecha"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-gray-50">
+                  <Calendar
+                    mode="single"
+                    selected={dateState.endDate}
+                    onSelect={(date) => handleDateChange("endDate", date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">

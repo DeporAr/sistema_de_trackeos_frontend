@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, type DayPickerProps } from "react-day-picker";
 import { es } from "date-fns/locale";
 import { format } from "date-fns";
 
@@ -31,8 +31,8 @@ const CustomHead = () => {
 
 // Componentes personalizados para reemplazar partes del calendario
 const components = {
-  IconLeft: ({ ...props }: any) => <ChevronLeft className="h-4 w-4" />,
-  IconRight: ({ ...props }: any) => <ChevronRight className="h-4 w-4" />,
+  IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+  IconRight: () => <ChevronRight className="h-4 w-4" />,
   Head: CustomHead, // Reemplazamos completamente el encabezado
 };
 

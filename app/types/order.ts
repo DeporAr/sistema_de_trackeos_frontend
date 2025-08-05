@@ -4,7 +4,8 @@ export type OrderStatus =
   | "EMBALADO"
   | "DESPACHADO"
   | "ENTREGADO"
-  | "EN_FALTANTE";
+  | "EN_FALTANTE"
+  | "CANCELADO";
 
 export interface OrderStatusHistory {
   id: number;
@@ -37,6 +38,7 @@ export const statusLabels: Record<OrderStatus, string> = {
   EMBALADO: "Embalado",
   DESPACHADO: "Despachado",
   ENTREGADO: "Entregado",
+  CANCELADO: "Cancelado",
   EN_FALTANTE: "En Faltante",
 };
 
@@ -57,6 +59,8 @@ export function getStatusColor(status: string): string {
     case "ENTREGADO":
       return "bg-emerald-100 text-emerald-800";
     case "EN_FALTANTE":
+      return "bg-red-100 text-red-800";
+    case "CANCELADO":
       return "bg-red-100 text-red-800";
     default:
       return "bg-gray-100 text-gray-800";
