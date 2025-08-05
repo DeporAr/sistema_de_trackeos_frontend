@@ -11,22 +11,29 @@ import { buttonVariants } from "@/app/components/ui/button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-// Días de la semana en español, empezando por lunes
+// Días de la semana en español (orden correcto para mostrar)
 const spanishDays = ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
 
-// Define el formatters según el tipo esperado por react-day-picker
-const formatters = {
-  // Forzamos manualmente el formato de los nombres de días
-  formatWeekdayName: (date: Date) => {
-    const day = date.getDay(); // 0-6, donde 0 es domingo
-    const adjustedIndex = (day + 6) % 7; // Convertimos 0->6, 1->0, 2->1, etc.
-    return spanishDays[adjustedIndex];
-  },
+// Creamos componente personalizado para reemplazar completamente el encabezado
+const CustomHead = () => {
+  return (
+    <thead>
+      <tr className="flex">
+        {spanishDays.map((day, i) => (
+          <th key={i} className="text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]">
+            {day}
+          </th>
+        ))}
+      </tr>
+    </thead>
+  );
 };
 
-// Forzamos el orden de los días para que la semana comience en lunes
-const modifiersClassNames = {
-  today: "bg-accent text-accent-foreground",
+// Componentes personalizados para reemplazar partes del calendario
+const components = {
+  IconLeft: ({ ...props }: any) => <ChevronLeft className="h-4 w-4" />,
+  IconRight: ({ ...props }: any) => <ChevronRight className="h-4 w-4" />,
+  Head: CustomHead, // Reemplazamos completamente el encabezado
 };
 
 function Calendar({
@@ -74,13 +81,8 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      components={{
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-      }}
+      components={components}
       locale={locale}
-      formatters={formatters}
-      modifiersClassNames={modifiersClassNames}
       weekStartsOn={1}
       {...props}
     />
