@@ -33,6 +33,8 @@ interface MetricsFiltersProps {
   onApplyFilters: () => void;
   isLoading: boolean;
   timeRange: string;
+  initialStartDate?: string; // YYYY-MM-DD
+  initialEndDate?: string;   // YYYY-MM-DD
 }
 
 export function MetricsFilters({
@@ -40,9 +42,16 @@ export function MetricsFilters({
   onApplyFilters,
   isLoading,
   timeRange,
+  initialStartDate,
+  initialEndDate,
 }: MetricsFiltersProps) {
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Inicializar con valores iniciales si están presentes
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    initialStartDate ? new Date(initialStartDate + 'T00:00:00-03:00') : undefined
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    initialEndDate ? new Date(initialEndDate + 'T23:59:59-03:00') : undefined
+  );
   const [status, setStatus] = useState<string>("ALL");
   const [orderId, setOrderId] = useState<string>("");
 

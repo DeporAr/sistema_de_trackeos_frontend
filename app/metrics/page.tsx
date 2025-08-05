@@ -12,6 +12,7 @@ import { getStatusLabel } from "@/app/types/order";
 import { OrderPage } from "@/app/types/metrics";
 import { useToast } from "@/app/components/ui/use-toast";
 import { useApi } from "@/app/hooks/useApi";
+import { getArgentinaDayRange } from "@/app/utils/dateAr";
 
 interface Metrics {
   data: Array<{
@@ -52,9 +53,13 @@ export default function MetricsPage() {
   const router = useRouter();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+  // Importar utilidad para fechas en Argentina
+  // (al inicio del archivo)
+  // import { getArgentinaDayRange } from "@/app/utils/dateAr";
+  const { startDate, endDate } = getArgentinaDayRange();
   const [filters, setFilters] = useState({
-    fecha_inicio: "",
-    fecha_fin: "",
+    fecha_inicio: startDate,
+    fecha_fin: endDate,
     responsable: "",
     pedido_id: "",
     estado: "",
@@ -307,6 +312,8 @@ export default function MetricsPage() {
             onApplyFilters={handleApplyFilters}
             isLoading={isLoadingMetrics}
             timeRange={filters.time_range}
+            initialStartDate={filters.fecha_inicio}
+            initialEndDate={filters.fecha_fin}
           />
         </div>
 

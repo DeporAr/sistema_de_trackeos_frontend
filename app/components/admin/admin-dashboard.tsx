@@ -38,6 +38,7 @@ import {
 } from "recharts";
 import { Loader2, RefreshCw, Download } from "lucide-react";
 import { useAuth } from "@/app/context/auth-context";
+import { getArgentinaDayRange } from "@/app/utils/dateAr";
 
 // Tipos para los filtros
 interface MetricsFilters {
@@ -65,9 +66,13 @@ interface User {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  // Importar utilidad para fechas en Argentina
+  // (al inicio del archivo)
+  // import { getArgentinaDayRange } from "@/app/utils/dateAr";
+  const { startDate, endDate } = getArgentinaDayRange();
   const [filters, setFilters] = useState<MetricsFilters>({
-    startDate: "",
-    endDate: "",
+    startDate,
+    endDate,
     responsable: "",
     pedidoId: "",
     estado: "",
