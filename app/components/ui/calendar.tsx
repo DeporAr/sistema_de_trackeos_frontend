@@ -11,8 +11,22 @@ import { buttonVariants } from "@/app/components/ui/button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
+// Días de la semana en español, empezando por lunes
+const spanishDays = ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
+
+// Define el formatters según el tipo esperado por react-day-picker
 const formatters = {
-  formatWeekdayName: (day: Date) => format(day, 'cccccc', { locale: es }),
+  // Forzamos manualmente el formato de los nombres de días
+  formatWeekdayName: (date: Date) => {
+    const day = date.getDay(); // 0-6, donde 0 es domingo
+    const adjustedIndex = (day + 6) % 7; // Convertimos 0->6, 1->0, 2->1, etc.
+    return spanishDays[adjustedIndex];
+  },
+};
+
+// Forzamos el orden de los días para que la semana comience en lunes
+const modifiersClassNames = {
+  today: "bg-accent text-accent-foreground",
 };
 
 function Calendar({
@@ -66,6 +80,8 @@ function Calendar({
       }}
       locale={locale}
       formatters={formatters}
+      modifiersClassNames={modifiersClassNames}
+      weekStartsOn={1}
       {...props}
     />
   );
