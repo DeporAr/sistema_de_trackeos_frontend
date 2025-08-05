@@ -120,10 +120,8 @@ export function MetricsFilters({
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-gray-50">
               <Calendar
-                mode="single"
                 selected={startDate}
                 onSelect={setStartDate}
-                initialFocus
               />
             </PopoverContent>
           </Popover>
@@ -147,10 +145,8 @@ export function MetricsFilters({
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-gray-50">
               <Calendar
-                mode="single"
                 selected={endDate}
                 onSelect={setEndDate}
-                initialFocus
               />
             </PopoverContent>
           </Popover>
