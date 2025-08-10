@@ -29,6 +29,7 @@ interface MetricsFiltersProps {
     pedido_id: string;
     estado: string;
     time_range: string;
+    origen: string;
   }) => void;
   onApplyFilters: () => void;
   isLoading: boolean;
@@ -54,6 +55,7 @@ export function MetricsFilters({
   );
   const [status, setStatus] = useState<string>("ALL");
   const [orderId, setOrderId] = useState<string>("");
+  const [origen, setOrigen] = useState<string>("ALL");
 
   const handleApplyFilters = () => {
     // Asegurarse de que las fechas estén en el formato correcto YYYY-MM-DD
@@ -70,6 +72,7 @@ export function MetricsFilters({
       pedido_id: orderId,
       estado: formattedStatus,
       time_range: timeRange,
+      origen: origen === "ALL" ? "" : origen,
     };
 
     console.log("Aplicando filtros:", newFilters);
@@ -82,6 +85,7 @@ export function MetricsFilters({
     setEndDate(undefined);
     setStatus("ALL");
     setOrderId("");
+    setOrigen("ALL");
 
     const resetFilters = {
       fecha_inicio: "",
@@ -89,6 +93,7 @@ export function MetricsFilters({
       responsable: "",
       pedido_id: "",
       estado: "",
+      origen: "",
       time_range: timeRange,
     };
 
@@ -167,6 +172,22 @@ export function MetricsFilters({
               <SelectItem value="DESPACHADO">Despachado</SelectItem>
               <SelectItem value="CANCELADO">Cancelado</SelectItem>
               <SelectItem value="EN_FALTANTE">En Faltante</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Origen */}
+        <div className="space-y-2">
+          <Label htmlFor="origen">Origen</Label>
+          <Select value={origen} onValueChange={setOrigen}>
+            <SelectTrigger id="origen">
+              <SelectValue placeholder="Seleccionar origen" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-50">
+              <SelectItem value="ALL">Todos</SelectItem>
+              <SelectItem value="DUX">DUX</SelectItem>
+              <SelectItem value="TIENDA_NUBE">Tienda Nube</SelectItem>
+              <SelectItem value="MERCADO_LIBRE">Mercado Libre</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -63,6 +63,7 @@ export default function MetricsPage() {
     responsable: "",
     pedido_id: "",
     estado: "",
+    origen: "",
     time_range: "day",
   });
   const [exportFormat, setExportFormat] = useState<"excel" | "csv" | null>(
@@ -156,6 +157,7 @@ export default function MetricsPage() {
             if (filters.fecha_fin) params.append("end_date", filters.fecha_fin);
             if (filters.responsable) params.append("user_id", filters.responsable);
             if (filters.estado) params.append("status", filters.estado);
+            if (filters.origen) params.append("origen", filters.origen);
             params.append("page", (currentPage - 1).toString());
             params.append("size", "20");
 
@@ -208,6 +210,7 @@ export default function MetricsPage() {
       responsable: "",
       pedido_id: "",
       estado: "",
+      origen: "",
       time_range: "day",
     };
     setFilters(resetFilters);

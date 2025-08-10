@@ -56,6 +56,7 @@ interface MetricsFilters {
   responsable: string;
   pedidoId: string;
   estado: string;
+  origen: string;
 }
 
 // Tipos para el estado local con objetos Date
@@ -65,6 +66,7 @@ interface DashboardState {
   responsable: string;
   pedidoId: string;
   estado: string;
+  origen: string;
 }
 
 // Tipos para las métricas
@@ -97,6 +99,7 @@ export default function AdminDashboard() {
     responsable: "",
     pedidoId: "",
     estado: "",
+    origen: "",
   });
 
   // Estado para los filtros que se envían a la API
@@ -106,6 +109,7 @@ export default function AdminDashboard() {
     responsable: "",
     pedidoId: "",
     estado: "",
+    origen: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -191,6 +195,7 @@ export default function AdminDashboard() {
         queryParams.append("responsable", filters.responsable);
       if (filters.pedidoId) queryParams.append("pedido_id", filters.pedidoId);
       if (filters.estado) queryParams.append("estado", filters.estado);
+      if (filters.origen) queryParams.append("origen", filters.origen);
 
       const response = await fetch(
         `https://incredible-charm-production.up.railway.app/metricas?${queryParams.toString()}`,
@@ -358,6 +363,24 @@ export default function AdminDashboard() {
                   <SelectItem value="DESPACHADO">Despachado</SelectItem>
                   <SelectItem value="ENTREGADO">Entregado</SelectItem>
                   <SelectItem value="EN_FALTANTE">En Faltante</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="origen">Origen</Label>
+              <Select
+                value={dateState.origen}
+                onValueChange={(value) => handleFilterChange("origen", value)}
+              >
+                <SelectTrigger id="origen">
+                  <SelectValue placeholder="Seleccionar origen" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-50">
+                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="DUX">DUX</SelectItem>
+                  <SelectItem value="TIENDA_NUBE">Tienda Nube</SelectItem>
+                  <SelectItem value="MERCADO_LIBRE">Mercado Libre</SelectItem>
                 </SelectContent>
               </Select>
             </div>
