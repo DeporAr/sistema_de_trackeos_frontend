@@ -1,13 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Configuración para evitar prerenderizado estático en páginas que usan autenticación
+  // La opción appDir ya no es necesaria en Next.js 15+ pues ya viene habilitada por defecto
   experimental: {
-    // Esto es para Next.js 13+
-    appDir: true,
+    // Opciones experimentales actualizadas para Next.js 15
   },
-  // Deshabilitar prerenderizado estático para rutas específicas
-  // que dependen de la autenticación del cliente
-  unstable_runtimeJS: true,
+  // La configuración de runtime ahora se maneja de otra manera en Next.js 15+
   eslint: {
     ignoreDuringBuilds: true,
   },
