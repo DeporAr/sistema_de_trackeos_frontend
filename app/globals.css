@@ -2,14 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: "Akira";
-  src: url("/fonts/Akira.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --primary: #f27122;
   --background: #ffffff;
@@ -29,5 +21,6 @@ body {
 }
 
 .font-akira {
-  font-family: "Akira", sans-serif;
+  font-family: var(--font-bebas), "Bebas Neue", sans-serif;
+  letter-spacing: 0.05em;
 }

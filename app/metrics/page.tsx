@@ -13,6 +13,7 @@ import { OrderPage } from "@/app/types/metrics";
 import { useToast } from "@/app/components/ui/use-toast";
 import { useApi } from "@/app/hooks/useApi";
 import { getArgentinaDayRange } from "@/app/utils/dateAr";
+import XLSX from "xlsx-js-style";
 
 interface Metrics {
   data: Array<{
@@ -219,19 +220,18 @@ export default function MetricsPage() {
   const handleExport = async (format: "excel" | "csv") => {
     setExportFormat(format);
     try {
-      const queryParams = new URLSearchParams();
-      if (filters.fecha_inicio)
-        queryParams.append("fecha_inicio", filters.fecha_inicio);
-      if (filters.fecha_fin) queryParams.append("fecha_fin", filters.fecha_fin);
-      if (filters.responsable)
-        queryParams.append("responsable", filters.responsable);
-      if (filters.pedido_id) queryParams.append("pedido_id", filters.pedido_id);
-      if (filters.estado) queryParams.append("estado", filters.estado);
-      if (filters.time_range)
-        queryParams.append("time_range", filters.time_range);
+      // Fetch all orders for export (without pagination limit)
+      const params = new URLSearchParams();
+      if (filters.fecha_inicio) params.append("start_date", filters.fecha_inicio);
+      if (filters.fecha_fin) params.append("end_date", filters.fecha_fin);
+      if (filters.responsable) params.append("user_id", filters.responsable);
+      if (filters.estado) params.append("status", filters.estado);
+      if (filters.origen) params.append("origen", filters.origen);
+      params.append("page", "0");
+      params.append("size", "10000"); // Large size to get all records
 
-      const response = await fetch(
-        `https://incredible-charm-production.up.railway.app/metricas/export?${queryParams.toString()}&format=${format}`,
+      const response = await apiFetch(
+        `https://incredible-charm-production.up.railway.app/metricas?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
@@ -239,19 +239,187 @@ export default function MetricsPage() {
         },
       );
 
-      if (!response.ok) throw new Error("Error al exportar los datos");
+      if (!response.ok) throw new Error("Error al obtener los datos para exportar");
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `metricas.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const data: Metrics = await response.json();
+
+      // Create workbook
+      const workbook = XLSX.utils.book_new();
+
+      // Define styles
+      const titleStyle = {
+        font: { bold: true, sz: 18, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "1F4E79" } },
+        alignment: { horizontal: "center", vertical: "center" },
+      };
+
+      const subtitleStyle = {
+        font: { bold: true, sz: 11, color: { rgb: "1F4E79" } },
+        alignment: { horizontal: "left", vertical: "center" },
+      };
+
+      const headerStyle = {
+        font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "2E75B6" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        },
+      };
+
+      const dataStyle = {
+        font: { sz: 10 },
+        alignment: { horizontal: "left", vertical: "center" },
+        border: {
+          top: { style: "thin", color: { rgb: "D9D9D9" } },
+          bottom: { style: "thin", color: { rgb: "D9D9D9" } },
+          left: { style: "thin", color: { rgb: "D9D9D9" } },
+          right: { style: "thin", color: { rgb: "D9D9D9" } },
+        },
+      };
+
+      const dataStyleAlt = {
+        ...dataStyle,
+        fill: { fgColor: { rgb: "F2F2F2" } },
+      };
+
+      // Prepare worksheet data with title rows
+      const wsData: (string | number | { v: string | number; s: object })[][] = [];
+
+      // Title row (merged)
+      wsData.push([
+        { v: "REPORTE DE PEDIDOS - DEPORAR", s: titleStyle },
+        { v: "", s: titleStyle },
+        { v: "", s: titleStyle },
+        { v: "", s: titleStyle },
+        { v: "", s: titleStyle },
+        { v: "", s: titleStyle },
+        { v: "", s: titleStyle },
+      ]);
+
+      // Empty row
+      wsData.push([]);
+
+      // Info rows
+      const dateRangeText = filters.fecha_inicio && filters.fecha_fin
+        ? `${filters.fecha_inicio} al ${filters.fecha_fin}`
+        : "Todas las fechas";
+      wsData.push([{ v: `Período: ${dateRangeText}`, s: subtitleStyle }]);
+      wsData.push([{ v: `Generado: ${new Date().toLocaleString("es-AR")}`, s: subtitleStyle }]);
+      wsData.push([{ v: `Total de pedidos: ${data.orders.content.length}`, s: subtitleStyle }]);
+
+      // Empty row before headers
+      wsData.push([]);
+
+      // Headers
+      const headers = ["ID Pedido", "Estado", "Responsable", "Fecha Creación", "Última Actualización", "Origen", "Código Envío"];
+      wsData.push(headers.map(h => ({ v: h, s: headerStyle })));
+
+      // Data rows
+      data.orders.content.forEach((order, index) => {
+        const style = index % 2 === 0 ? dataStyle : dataStyleAlt;
+        wsData.push([
+          { v: order.orderCode || order.id, s: style },
+          { v: getStatusLabel(order.status), s: style },
+          { v: order.assignedToName || "Sin asignar", s: style },
+          { v: order.createdAt ? new Date(order.createdAt).toLocaleString("es-AR") : "", s: style },
+          { v: order.updatedAt ? new Date(order.updatedAt).toLocaleString("es-AR") : "", s: style },
+          { v: order.orderOrigin || "", s: style },
+          { v: order.shippingCode || "", s: style },
+        ]);
+      });
+
+      // Create worksheet from array
+      const worksheet = XLSX.utils.aoa_to_sheet(wsData);
+
+      // Merge title cells
+      worksheet["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Merge title row
+      ];
+
+      // Set column widths
+      worksheet["!cols"] = [
+        { wch: 15 }, // ID Pedido
+        { wch: 18 }, // Estado
+        { wch: 25 }, // Responsable
+        { wch: 22 }, // Fecha Creación
+        { wch: 22 }, // Última Actualización
+        { wch: 15 }, // Origen
+        { wch: 18 }, // Código Envío
+      ];
+
+      // Set row heights
+      worksheet["!rows"] = [
+        { hpt: 35 }, // Title row height
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Pedidos");
+
+      // Add summary sheet
+      const summaryData: (string | number | { v: string | number; s: object })[][] = [];
+
+      summaryData.push([
+        { v: "RESUMEN DE MÉTRICAS", s: titleStyle },
+        { v: "", s: titleStyle },
+        { v: "", s: titleStyle },
+      ]);
+      summaryData.push([]);
+      summaryData.push([
+        { v: "Métrica", s: headerStyle },
+        { v: "Valor", s: headerStyle },
+      ]);
+      summaryData.push([
+        { v: "Total de Pedidos", s: dataStyle },
+        { v: data.totalOrders, s: dataStyle },
+      ]);
+      summaryData.push([
+        { v: "Pedidos Completados", s: dataStyleAlt },
+        { v: data.completedOrders, s: dataStyleAlt },
+      ]);
+      summaryData.push([
+        { v: "Pedidos Pendientes", s: dataStyle },
+        { v: data.pendingOrders, s: dataStyle },
+      ]);
+      summaryData.push([
+        { v: "Tiempo Promedio (horas)", s: dataStyleAlt },
+        { v: (data.averageProcessingTime / 3600).toFixed(1), s: dataStyleAlt },
+      ]);
+      summaryData.push([
+        { v: "Pedidos en Riesgo", s: dataStyle },
+        { v: data.ordersAtRisk, s: dataStyle },
+      ]);
+
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      summarySheet["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+      summarySheet["!cols"] = [{ wch: 30 }, { wch: 20 }];
+      summarySheet["!rows"] = [{ hpt: 35 }];
+
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumen");
+
+      // Generate file
+      const fileExtension = format === "excel" ? "xlsx" : "csv";
+      const fileName = `metricas_${filters.fecha_inicio || "all"}_${filters.fecha_fin || "all"}.${fileExtension}`;
+
+      if (format === "excel") {
+        XLSX.writeFile(workbook, fileName);
+      } else {
+        XLSX.writeFile(workbook, fileName, { bookType: "csv" });
+      }
+
+      toast({
+        title: "Exportación exitosa",
+        description: `Se exportaron ${data.orders.content.length} pedidos.`,
+      });
     } catch (error) {
       console.error("Error al exportar:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron exportar los datos. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     } finally {
       setExportFormat(null);
     }

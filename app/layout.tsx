@@ -4,6 +4,13 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/app/context/auth-context";
 import { Header } from "@/app/components/header";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Bebas_Neue } from "next/font/google";
+
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-bebas",
+});
 
 export const metadata: Metadata = {
   title: "DeporAr QR Scanner",
@@ -17,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className={bebasNeue.variable}>
       <body>
         <AuthProvider>
           <Header />
