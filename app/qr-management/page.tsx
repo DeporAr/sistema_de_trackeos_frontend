@@ -40,7 +40,7 @@ interface OrderItem {
   shippingCode: string | null;
   orderOrigin: string;
   status: string;
-  recipientName?: string;
+  buyerRecipientName?: string;
   address?: string;
   city?: string;
   createdAt: string;
@@ -58,7 +58,7 @@ interface LabelData {
   shippingCode: string;
   orderCode: string;
   qrCodeImage: string;
-  recipientName: string;
+  buyerRecipientName: string;
   address: string;
   postalCode: string;
   orderOrigin: string;
@@ -380,7 +380,7 @@ export default function QRManagementPage() {
         pdf.setTextColor(0, 0, 0);
 
         // Recipient name (truncate if too long)
-        const recipientName = label.recipientName || "Sin nombre";
+        const recipientName = label.buyerRecipientName || "Sin nombre";
         const truncatedName = recipientName.length > 22
           ? recipientName.substring(0, 19) + "..."
           : recipientName;
@@ -611,7 +611,7 @@ export default function QRManagementPage() {
                         <TableCell className="font-medium">
                           {order.orderCode}
                         </TableCell>
-                        <TableCell>{order.recipientName || "-"}</TableCell>
+                        <TableCell>{order.buyerRecipientName || "-"}</TableCell>
                         <TableCell>
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100">
                             {order.orderOrigin}
