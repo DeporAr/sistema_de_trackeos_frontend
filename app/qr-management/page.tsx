@@ -40,7 +40,7 @@ interface OrderItem {
   shippingCode: string | null;
   orderOrigin: string;
   status: string;
-  buyerRecipientName?: string;
+  recipientName?: string;
   address?: string;
   city?: string;
   createdAt: string;
@@ -58,13 +58,13 @@ interface LabelData {
   shippingCode: string;
   orderCode: string;
   qrCodeImage: string;
-  buyerRecipientName: string;
+  recipientName: string;
   address: string;
   postalCode: string;
   orderOrigin: string;
 }
 
-const ORIGINS = ["DUX", "TN", "MANUAL"];
+const ORIGINS = ["DUX", "TIENDA_NUBE", "MANUAL"];
 
 export default function QRManagementPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -380,7 +380,7 @@ export default function QRManagementPage() {
         pdf.setTextColor(0, 0, 0);
 
         // Recipient name (truncate if too long)
-        const recipientName = label.buyerRecipientName || "Sin nombre";
+        const recipientName = label.recipientName || "Sin nombre";
         const truncatedName = recipientName.length > 22
           ? recipientName.substring(0, 19) + "..."
           : recipientName;
@@ -433,6 +433,20 @@ export default function QRManagementPage() {
     }
   };
 
+
+  // Helper function to get badge styling for origin in table
+  const getOriginBadgeClass = (origin: string): string => {
+    const normalized = origin?.toUpperCase().replace(/_SIN_ENVIO$/, '').trim() || '';
+    const badgeMap: Record<string, string> = {
+      'DUX': 'bg-blue-100 text-blue-800',
+      'TN': 'bg-green-100 text-green-800',
+      'TIENDA_NUBE': 'bg-green-100 text-green-800',
+      'ML': 'bg-yellow-100 text-yellow-800',
+      'MERCADO_LIBRE': 'bg-yellow-100 text-yellow-800',
+      'MANUAL': 'bg-gray-100 text-gray-800',
+    };
+    return badgeMap[normalized] || 'bg-gray-100 text-gray-800';
+  };
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -520,11 +534,14 @@ export default function QRManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
-                    {ORIGINS.map((o) => (
-                      <SelectItem key={o} value={o}>
-                        {o}
-                      </SelectItem>
-                    ))}
+                    {ORIGINS.map((o) => {
+                      const displayName = o === 'DUX' ? 'DUX' : o === 'TIENDA_NUBE' ? 'Tienda Nube' : 'Manual';
+                      return (
+                        <SelectItem key={o} value={o}>
+                          {displayName}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -611,9 +628,9 @@ export default function QRManagementPage() {
                         <TableCell className="font-medium">
                           {order.orderCode}
                         </TableCell>
-                        <TableCell>{order.buyerRecipientName || "-"}</TableCell>
+                        <TableCell>{order.recipientName || "-"}</TableCell>
                         <TableCell>
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getOriginBadgeClass(order.orderOrigin)}`}>
                             {order.orderOrigin}
                           </span>
                         </TableCell>
