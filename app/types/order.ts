@@ -8,11 +8,11 @@ export type OrderStatus =
   | "CANCELADO";
 
 export interface OrderStatusHistory {
-  id: number;
+  id?: number;
   status: OrderStatus;
   startedAt: string;
   endedAt: string | null;
-  changedBy: {
+  changedBy: string | {
     id: number;
     name: string;
   };

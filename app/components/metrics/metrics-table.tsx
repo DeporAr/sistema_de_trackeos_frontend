@@ -52,6 +52,33 @@ export function MetricsTable({ orders, totalPages, currentPage, setCurrentPage }
     }
   };
 
+  // Get the last responsible person from status history
+  const getLastResponsible = (order: Order): string => {
+    // First check if assignedToName is available
+    if (order.assignedToName) {
+      return order.assignedToName;
+    }
+
+    // If not, get from the last status history entry
+    if (order.statusHistory && order.statusHistory.length > 0) {
+      // Sort by startedAt descending to get the most recent
+      const sortedHistory = [...order.statusHistory].sort(
+        (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+      );
+      const lastEntry = sortedHistory[0];
+      if (lastEntry?.changedBy) {
+        // changedBy can be a string or an object with name property
+        if (typeof lastEntry.changedBy === 'string') {
+          return lastEntry.changedBy;
+        } else if (lastEntry.changedBy.name) {
+          return lastEntry.changedBy.name;
+        }
+      }
+    }
+
+    return "No asignado";
+  };
+
   // Generar un ID único para el diálogo
   const dialogDescriptionId = React.useId();
 
@@ -135,7 +162,7 @@ export function MetricsTable({ orders, totalPages, currentPage, setCurrentPage }
                       {getStatusLabel(order.status)}
                     </Badge>
                   </TableCell>
-                  <TableCell>{order.assignedToName || "No asignado"}</TableCell>
+                  <TableCell>{getLastResponsible(order)}</TableCell>
                   <TableCell>{formatDateTime(order.createdAt)}</TableCell>
                   <TableCell>{formatDateTime(order.updatedAt)}</TableCell>
                   <TableCell className="text-right">

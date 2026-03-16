@@ -12,6 +12,7 @@ import {
   BarChart3,
   Users,
   Plus,
+  Printer,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -132,6 +133,15 @@ export function Header() {
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Cargar Pedido
+              </button>
+              <button
+                onClick={() => handleNavigation("/qr-management")}
+                className={`text-gray-700 hover:text-primary transition-colors flex items-center ${
+                  pathname === "/qr-management" ? "text-primary" : ""
+                }`}
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Imprimir QRs
               </button>
             </nav>
           )}
@@ -277,6 +287,15 @@ export function Header() {
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Cargar Pedido
+              </button>
+              <button
+                onClick={() => handleNavigation("/qr-management")}
+                className={`flex items-center w-full px-2 py-2 text-gray-700 hover:bg-gray-100 rounded-md ${
+                  pathname === "/qr-management" ? "bg-gray-100" : ""
+                }`}
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Imprimir QRs
               </button>
 
               <button
