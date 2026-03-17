@@ -64,7 +64,7 @@ interface LabelData {
   orderOrigin: string;
 }
 
-const ORIGINS = ["DUX", "TIENDA_NUBE", "MANUAL"];
+const ORIGINS = ["DUX", "TIENDA_NUBE", "MERCADO_LIBRE_SIN_ENVIO", "MANUAL"];
 
 export default function QRManagementPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -535,7 +535,10 @@ export default function QRManagementPage() {
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
                     {ORIGINS.map((o) => {
-                      const displayName = o === 'DUX' ? 'DUX' : o === 'TIENDA_NUBE' ? 'Tienda Nube' : 'Manual';
+                      let displayName = 'Manual';
+                      if (o === 'DUX') displayName = 'DUX';
+                      else if (o === 'TIENDA_NUBE') displayName = 'Tienda Nube';
+                      else if (o === 'MERCADO_LIBRE_SIN_ENVIO') displayName = 'MercadoLibre';
                       return (
                         <SelectItem key={o} value={o}>
                           {displayName}
