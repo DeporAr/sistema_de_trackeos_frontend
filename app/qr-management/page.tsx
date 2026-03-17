@@ -532,15 +532,15 @@ export default function QRManagementPage() {
                   <SelectTrigger>
                     <SelectValue placeholder="Todos los orígenes" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="all" className="bg-white hover:bg-gray-50">Todos</SelectItem>
                     {ORIGINS.map((o) => {
                       let displayName = 'Manual';
                       if (o === 'DUX') displayName = 'DUX';
                       else if (o === 'TIENDA_NUBE') displayName = 'Tienda Nube';
                       else if (o === 'MERCADO_LIBRE_SIN_ENVIO') displayName = 'MercadoLibre';
                       return (
-                        <SelectItem key={o} value={o}>
+                        <SelectItem key={o} value={o} className="bg-white hover:bg-gray-50">
                           {displayName}
                         </SelectItem>
                       );
