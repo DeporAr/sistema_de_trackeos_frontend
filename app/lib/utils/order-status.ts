@@ -1,4 +1,6 @@
 export type OrderStatus =
+  | "CREADO"
+  | "IMPRESO"
   | "RECIBIDO"
   | "EN_PREPARACION"
   | "EMBALADO"
@@ -7,6 +9,8 @@ export type OrderStatus =
   | "EN_FALTANTE";
 
 export const statusLabels: Record<OrderStatus, string> = {
+  CREADO: "Creado",
+  IMPRESO: "Impreso",
   RECIBIDO: "Recibido",
   EN_PREPARACION: "En Preparación",
   EMBALADO: "Embalado",

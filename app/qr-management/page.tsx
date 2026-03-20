@@ -64,7 +64,8 @@ interface LabelData {
   orderOrigin: string;
 }
 
-const ORIGINS = ["DUX", "TIENDA_NUBE", "MERCADO_LIBRE_SIN_ENVIO", "MANUAL"];
+const ORIGINS = ["DUX", "TIENDA_NUBE", "TIENDA_NUBE_EFD", "MERCADO_LIBRE_SIN_ENVIO", "MANUAL"];
+const STATUSES = ["CREADO", "IMPRESO", "RECIBIDO", "EN_ESPERA", "EN_PREPARACION", "EMBALADO", "ENVIADO", "ENTREGADO"];
 
 export default function QRManagementPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -76,6 +77,8 @@ export default function QRManagementPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [origin, setOrigin] = useState<string>("");
+  const [orderCodes, setOrderCodes] = useState("");
+  const [status, setStatus] = useState<string>("");
 
   // Data state
   const [orders, setOrders] = useState<OrderItem[]>([]);
@@ -109,7 +112,7 @@ export default function QRManagementPage() {
   }, []);
 
   // Fetch orders
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (page = currentPage) => {
     if (!startDate || !endDate) {
       toast({
         title: "Error",
@@ -130,7 +133,13 @@ export default function QRManagementPage() {
       if (origin && origin !== "all") {
         params.append("origin", origin);
       }
-      params.append("page", currentPage.toString());
+      if (status && status !== "all") {
+        params.append("status", status);
+      }
+      if (orderCodes.trim()) {
+        params.append("order_codes", orderCodes.trim());
+      }
+      params.append("page", page.toString());
       params.append("size", pageSize.toString());
 
       const response = await apiFetch(
@@ -160,12 +169,13 @@ export default function QRManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [startDate, endDate, origin, currentPage, apiFetch, toast]);
+  }, [startDate, endDate, origin, status, orderCodes, currentPage, apiFetch, toast]);
 
   // Handle search
   const handleSearch = () => {
-    setCurrentPage(0);
-    fetchOrders();
+    const firstPage = 0;
+    setCurrentPage(firstPage);
+    fetchOrders(firstPage);
   };
 
   // Handle select all
@@ -293,6 +303,7 @@ export default function QRManagementPage() {
           'DUX': 'DUX',
           'TN': 'Tienda Nube',
           'TIENDA_NUBE': 'Tienda Nube',
+          'TIENDA_NUBE_EFD': 'TN EFD',
           'ML': 'MercadoLibre',
           'MERCADO_LIBRE': 'MercadoLibre',
           'MANUAL': 'Manual',
@@ -307,6 +318,7 @@ export default function QRManagementPage() {
           'DUX': { r: 59, g: 130, b: 246 }, // Blue
           'TN': { r: 16, g: 185, b: 129 }, // Green
           'TIENDA_NUBE': { r: 16, g: 185, b: 129 }, // Green
+          'TIENDA_NUBE_EFD': { r: 139, g: 92, b: 246 }, // Purple
           'ML': { r: 255, g: 214, b: 0 }, // Yellow
           'MERCADO_LIBRE': { r: 255, g: 214, b: 0 }, // Yellow
           'MANUAL': { r: 156, g: 163, b: 175 }, // Gray
@@ -415,9 +427,41 @@ export default function QRManagementPage() {
       const fileName = `etiquetas_qr_${startDate || "all"}_${endDate || "all"}.pdf`;
       pdf.save(fileName);
 
+      // Update printed orders status to IMPRESO
+      const token = localStorage.getItem("authToken");
+      const updatePromises = labels.map((label) =>
+        apiFetch(
+          `https://incredible-charm-production.up.railway.app/orders/${label.shippingCode}/status`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              orderStatus: "IMPRESO",
+              userId: user?.id,
+              userName: user?.name,
+            }),
+          }
+        ).catch((err) => console.error(`Error updating status for ${label.shippingCode}:`, err))
+      );
+      const results = await Promise.allSettled(updatePromises);
+      const updated = results.filter((r) => r.status === "fulfilled").length;
+
+      // Update local state to reflect new status
+      const printedCodes = new Set(labels.map((l) => l.shippingCode));
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.shippingCode && printedCodes.has(o.shippingCode)
+            ? { ...o, status: "IMPRESO" }
+            : o
+        )
+      );
+
       toast({
         title: "Descarga exitosa",
-        description: `Se descargaron ${labels.length} etiquetas en PDF.`,
+        description: `Se descargaron ${labels.length} etiquetas en PDF y se actualizaron ${updated} pedidos a "Impreso".`,
       });
 
     } catch (error) {
@@ -441,6 +485,7 @@ export default function QRManagementPage() {
       'DUX': 'bg-blue-100 text-blue-800',
       'TN': 'bg-green-100 text-green-800',
       'TIENDA_NUBE': 'bg-green-100 text-green-800',
+      'TIENDA_NUBE_EFD': 'bg-purple-100 text-purple-800',
       'ML': 'bg-yellow-100 text-yellow-800',
       'MERCADO_LIBRE': 'bg-yellow-100 text-yellow-800',
       'MANUAL': 'bg-gray-100 text-gray-800',
@@ -503,7 +548,7 @@ export default function QRManagementPage() {
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-lg font-semibold mb-4">Filtros de Búsqueda</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Fecha Inicio
@@ -526,6 +571,38 @@ export default function QRManagementPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Números de Pedido
+                </label>
+                <Input
+                  placeholder="123,456,789"
+                  value={orderCodes}
+                  onChange={(e) => setOrderCodes(e.target.value)}
+                  title="Separar por comas"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado
+                </label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos los estados" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="all" className="bg-white hover:bg-gray-50">Todos</SelectItem>
+                    <SelectItem value="CREADO" className="bg-white hover:bg-gray-50">Creado</SelectItem>
+                    <SelectItem value="IMPRESO" className="bg-white hover:bg-gray-50">Impreso</SelectItem>
+                    <SelectItem value="RECIBIDO" className="bg-white hover:bg-gray-50">Recibido</SelectItem>
+                    <SelectItem value="EN_ESPERA" className="bg-white hover:bg-gray-50">En Espera</SelectItem>
+                    <SelectItem value="EN_PREPARACION" className="bg-white hover:bg-gray-50">En Preparación</SelectItem>
+                    <SelectItem value="EMBALADO" className="bg-white hover:bg-gray-50">Embalado</SelectItem>
+                    <SelectItem value="ENVIADO" className="bg-white hover:bg-gray-50">Enviado</SelectItem>
+                    <SelectItem value="ENTREGADO" className="bg-white hover:bg-gray-50">Entregado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Origen
                 </label>
                 <Select value={origin} onValueChange={setOrigin}>
@@ -538,6 +615,7 @@ export default function QRManagementPage() {
                       let displayName = 'Manual';
                       if (o === 'DUX') displayName = 'DUX';
                       else if (o === 'TIENDA_NUBE') displayName = 'Tienda Nube';
+                      else if (o === 'TIENDA_NUBE_EFD') displayName = 'TN EFD';
                       else if (o === 'MERCADO_LIBRE_SIN_ENVIO') displayName = 'MercadoLibre';
                       return (
                         <SelectItem key={o} value={o} className="bg-white hover:bg-gray-50">
@@ -664,8 +742,9 @@ export default function QRManagementPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setCurrentPage((prev) => Math.max(0, prev - 1));
-                          fetchOrders();
+                          const prevPage = Math.max(0, currentPage - 1);
+                          setCurrentPage(prevPage);
+                          fetchOrders(prevPage);
                         }}
                         disabled={currentPage === 0}
                       >
@@ -676,10 +755,9 @@ export default function QRManagementPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setCurrentPage((prev) =>
-                            Math.min(totalPages - 1, prev + 1)
-                          );
-                          fetchOrders();
+                          const nextPage = Math.min(totalPages - 1, currentPage + 1);
+                          setCurrentPage(nextPage);
+                          fetchOrders(nextPage);
                         }}
                         disabled={currentPage >= totalPages - 1}
                       >

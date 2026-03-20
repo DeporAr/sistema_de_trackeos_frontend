@@ -166,6 +166,8 @@ export function MetricsFilters({
             </SelectTrigger>
             <SelectContent className="bg-gray-50">
               <SelectItem value="ALL">Todos</SelectItem>
+              <SelectItem value="CREADO">Creado</SelectItem>
+              <SelectItem value="IMPRESO">Impreso</SelectItem>
               <SelectItem value="RECIBIDO">Recibido</SelectItem>
               <SelectItem value="EN_PREPARACION">En Preparación</SelectItem>
               <SelectItem value="EMBALADO">Embalado</SelectItem>
@@ -187,6 +189,7 @@ export function MetricsFilters({
               <SelectItem value="ALL">Todos</SelectItem>
               <SelectItem value="DUX">DUX</SelectItem>
               <SelectItem value="TIENDA_NUBE">Tienda Nube</SelectItem>
+              <SelectItem value="TIENDA_NUBE_EFD">TN EFD</SelectItem>
               <SelectItem value="MERCADO_LIBRE">Mercado Libre</SelectItem>
             </SelectContent>
           </Select>

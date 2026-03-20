@@ -45,6 +45,10 @@ export function OrderDetails({
 
   const getStatusLabel = (status: string) => {
     switch (status) {
+      case "creado":
+        return "Creado";
+      case "impreso":
+        return "Impreso";
       case "pendiente":
         return "Pendiente";
       case "en_preparacion":
@@ -68,6 +72,10 @@ export function OrderDetails({
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "creado":
+        return "bg-slate-100 text-slate-800";
+      case "impreso":
+        return "bg-cyan-100 text-cyan-800";
       case "pendiente":
         return "bg-yellow-100 text-yellow-800";
       case "en_preparacion":
@@ -91,6 +99,8 @@ export function OrderDetails({
 
   const getAvailableStatuses = () => {
     const allStatuses = [
+      { value: "creado", label: "Creado" },
+      { value: "impreso", label: "Impreso" },
       { value: "pendiente", label: "Pendiente" },
       { value: "en_preparacion", label: "En Preparación" },
       { value: "preparado", label: "Preparado" },

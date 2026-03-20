@@ -15,6 +15,8 @@ import { useRouter } from "next/navigation";
 
 // Define the order status types
 export type OrderStatus =
+  | "CREADO"
+  | "IMPRESO"
   | "RECIBIDO"
   | "EN_PREPARACION"
   | "EMBALADO"
@@ -36,13 +38,15 @@ interface Role {
 
 // Modificar el mapeo de roles a estados permitidos
 const roleStatusMap: Record<UserRole, OrderStatus[]> = {
-  super_admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
-  admin: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
-  operador: ["RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
+  super_admin: ["CREADO", "IMPRESO", "RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
+  admin: ["CREADO", "IMPRESO", "RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
+  operador: ["CREADO", "IMPRESO", "RECIBIDO", "EN_PREPARACION", "EMBALADO", "DESPACHADO", "CANCELADO", "EN_FALTANTE"],
 };
 
 // Status labels for display
 const statusLabels: Record<OrderStatus, string> = {
+  CREADO: "Creado",
+  IMPRESO: "Impreso",
   RECIBIDO: "Recibido",
   EN_PREPARACION: "En Preparación",
   EMBALADO: "Embalado",

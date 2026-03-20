@@ -1,4 +1,6 @@
 export type OrderStatus =
+  | "CREADO"
+  | "IMPRESO"
   | "RECIBIDO"
   | "EN_PREPARACION"
   | "EMBALADO"
@@ -33,6 +35,8 @@ export interface Order {
 }
 
 export const statusLabels: Record<OrderStatus, string> = {
+  CREADO: "Creado",
+  IMPRESO: "Impreso",
   RECIBIDO: "Recibido",
   EN_PREPARACION: "En Preparación",
   EMBALADO: "Embalado",
@@ -48,6 +52,10 @@ export function getStatusLabel(status: string): string {
 
 export function getStatusColor(status: string): string {
   switch (status) {
+    case "CREADO":
+      return "bg-slate-100 text-slate-800";
+    case "IMPRESO":
+      return "bg-cyan-100 text-cyan-800";
     case "RECIBIDO":
       return "bg-yellow-100 text-yellow-800";
     case "EN_PREPARACION":
