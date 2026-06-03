@@ -1,0 +1,38 @@
+app/components/metrics/metrics-table.tsx
+  be6802fddd41c3c7 169,179-180,183
+app/types/order.ts
+  be6802fddd41c3c7 35
+app/metrics/page.tsx
+  s_64dcefcf99059f::t_6c5c8e826640a9 342,352,365,373
+  s_64dcefcf99059f::t_272eaadad01689 220-230,234-249,251,253-255,257-267
+  s_64dcefcf99059f::t_d1c48c6d086acd 324
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "0a039b879e6f30195e5e1a41719281c3f65e85a4",
+  "prompts": {
+    "be6802fddd41c3c7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "e5088f2a-cf51-498b-b6d1-9dbb3652094f",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "jobruno <joabruno@frba.utn.edu.ar>",
+      "total_additions": 5,
+      "total_deletions": 3,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  },
+  "sessions": {
+    "s_64dcefcf99059f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6950b247-0684-44ba-bb48-f796c27d4336",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "jobruno <joabruno@frba.utn.edu.ar>"
+    }
+  }
+}
