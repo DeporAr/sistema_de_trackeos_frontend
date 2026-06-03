@@ -166,7 +166,7 @@ export function MetricsTable({ orders, totalPages, currentPage, setCurrentPage }
                   <TableCell>{formatDateTime(order.createdAt)}</TableCell>
                   <TableCell>{formatDateTime(order.updatedAt)}</TableCell>
                   <TableCell className="text-right">
-                    {order.imageUrl ? (
+                    {(order.imageUrls?.length || order.imageUrl) ? (
                       <Button
                         ref={order.id === 1 ? imageButtonRef : null}
                         variant="ghost"
@@ -176,10 +176,11 @@ export function MetricsTable({ orders, totalPages, currentPage, setCurrentPage }
                           e.stopPropagation();
                           e.preventDefault();
 
-                          if (!order.imageUrl || !authToken) {
+                          const url = order.imageUrls?.[0] ?? order.imageUrl ?? null;
+                          if (!url || !authToken) {
                             return;
                           }
-                          setSelectedImageUrl(order.imageUrl);
+                          setSelectedImageUrl(url);
                         }}
                       >
                         <ImageIcon className="h-5 w-5" />

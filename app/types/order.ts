@@ -32,6 +32,7 @@ export interface Order {
   updatedAt: string;
   statusHistory: OrderStatusHistory[];
   imageUrl?: string | null;
+  imageUrls?: string[] | null;
 }
 
 export const statusLabels: Record<OrderStatus, string> = {

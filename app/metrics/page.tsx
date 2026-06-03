@@ -217,31 +217,54 @@ export default function MetricsPage() {
     setFilters(resetFilters);
   };
 
+  const getEmbaladoResponsible = (order: import("@/app/types/order").Order): string => {
+    if (order.statusHistory && order.statusHistory.length > 0) {
+      const entry = order.statusHistory.find(h => h.status === "EMBALADO");
+      if (entry?.changedBy) {
+        if (typeof entry.changedBy === "string") return entry.changedBy;
+        if (entry.changedBy.name) return entry.changedBy.name;
+      }
+    }
+    return "N/A";
+  };
+
   const handleExport = async (format: "excel" | "csv") => {
     setExportFormat(format);
     try {
-      // Fetch all orders for export (without pagination limit)
-      const params = new URLSearchParams();
-      if (filters.fecha_inicio) params.append("start_date", filters.fecha_inicio);
-      if (filters.fecha_fin) params.append("end_date", filters.fecha_fin);
-      if (filters.responsable) params.append("user_id", filters.responsable);
-      if (filters.estado) params.append("status", filters.estado);
-      if (filters.origen) params.append("origen", filters.origen);
-      params.append("page", "0");
-      params.append("size", "10000"); // Large size to get all records
+      // Fetch all pages to overcome backend pagination limit
+      const buildParams = (page: number) => {
+        const params = new URLSearchParams();
+        if (filters.fecha_inicio) params.append("start_date", filters.fecha_inicio);
+        if (filters.fecha_fin) params.append("end_date", filters.fecha_fin);
+        if (filters.responsable) params.append("user_id", filters.responsable);
+        if (filters.estado) params.append("status", filters.estado);
+        if (filters.origen) params.append("origen", filters.origen);
+        params.append("page", page.toString());
+        params.append("size", "2000");
+        return params;
+      };
 
-      const response = await apiFetch(
-        `https://incredible-charm-production.up.railway.app/metricas?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        },
+      const firstResponse = await apiFetch(
+        `https://incredible-charm-production.up.railway.app/metricas?${buildParams(0).toString()}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` } },
       );
+      if (!firstResponse.ok) throw new Error("Error al obtener los datos para exportar");
 
-      if (!response.ok) throw new Error("Error al obtener los datos para exportar");
+      const firstData: Metrics = await firstResponse.json();
+      const totalPages = firstData.orders.totalPages;
+      const allOrders = [...firstData.orders.content];
 
-      const data: Metrics = await response.json();
+      for (let page = 1; page < totalPages; page++) {
+        const res = await apiFetch(
+          `https://incredible-charm-production.up.railway.app/metricas?${buildParams(page).toString()}`,
+          { headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` } },
+        );
+        if (!res.ok) throw new Error(`Error al obtener página ${page}`);
+        const pageData: Metrics = await res.json();
+        allOrders.push(...pageData.orders.content);
+      }
+
+      const data: Metrics = { ...firstData, orders: { ...firstData.orders, content: allOrders } };
 
       // Create workbook
       const workbook = XLSX.utils.book_new();
@@ -298,6 +321,7 @@ export default function MetricsPage() {
         { v: "", s: titleStyle },
         { v: "", s: titleStyle },
         { v: "", s: titleStyle },
+        { v: "", s: titleStyle },
       ]);
 
       // Empty row
@@ -315,7 +339,7 @@ export default function MetricsPage() {
       wsData.push([]);
 
       // Headers
-      const headers = ["ID Pedido", "Estado", "Responsable", "Fecha Creación", "Última Actualización", "Origen", "Código Envío"];
+      const headers = ["ID Pedido", "Estado", "Responsable", "Armado por", "Fecha Creación", "Última Actualización", "Origen", "Código Envío"];
       wsData.push(headers.map(h => ({ v: h, s: headerStyle })));
 
       // Data rows
@@ -325,6 +349,7 @@ export default function MetricsPage() {
           { v: order.orderCode || order.id, s: style },
           { v: getStatusLabel(order.status), s: style },
           { v: order.assignedToName || "Sin asignar", s: style },
+          { v: getEmbaladoResponsible(order), s: style },
           { v: order.createdAt ? new Date(order.createdAt).toLocaleString("es-AR") : "", s: style },
           { v: order.updatedAt ? new Date(order.updatedAt).toLocaleString("es-AR") : "", s: style },
           { v: order.orderOrigin || "", s: style },
@@ -337,7 +362,7 @@ export default function MetricsPage() {
 
       // Merge title cells
       worksheet["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Merge title row
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // Merge title row
       ];
 
       // Set column widths
@@ -345,6 +370,7 @@ export default function MetricsPage() {
         { wch: 15 }, // ID Pedido
         { wch: 18 }, // Estado
         { wch: 25 }, // Responsable
+        { wch: 25 }, // Armado por
         { wch: 22 }, // Fecha Creación
         { wch: 22 }, // Última Actualización
         { wch: 15 }, // Origen
